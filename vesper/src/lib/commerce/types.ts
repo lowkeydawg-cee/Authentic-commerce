@@ -53,7 +53,24 @@ export interface ProductModel {
   standin: boolean;
 }
 
-export interface Product {
+/** A construction detail; also a 3D hotspot (anchor = named empty in the model). */
+export interface Highlight {
+  id: string;
+  anchor: string;
+  kicker: string;
+  title: string;
+  body: string;
+}
+
+export interface ProductContent {
+  details: string[];
+  care: string[];
+  /** Fit guidance shown beside the size picker. */
+  fit: string;
+  highlights: Highlight[];
+}
+
+export interface Product extends ProductContent {
   slug: string;
   title: string;
   category: CategorySlug;

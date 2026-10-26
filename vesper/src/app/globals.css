@@ -76,6 +76,37 @@
   animation: fade-rise calc(var(--hero-ms) * 0.7) cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Step 7 · add-to-bag: the header count fades up when it changes. */
+@keyframes count-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.anim-count {
+  display: inline-block;
+  animation: count-in 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Step 7 · colour change crossfade, quick confirmations, and the one-time
+   "choose a size" nudge (2px, never a shake). */
+@keyframes crossfade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes nudge {
+  0%, 100% { transform: translateX(0); }
+  30% { transform: translateX(2px); }
+  60% { transform: translateX(-2px); }
+}
+.anim-crossfade {
+  animation: crossfade-in 400ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+.anim-fade-quick {
+  animation: fade-rise 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.anim-nudge {
+  animation: nudge 320ms cubic-bezier(0.4, 0, 0.2, 1) 1;
+}
+
 /* Without JavaScript, scroll reveals must never hide content. */
 @media (scripting: none) {
   [data-reveal] {

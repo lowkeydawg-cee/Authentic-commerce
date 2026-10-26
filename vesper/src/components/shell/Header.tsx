@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useBagCount } from "@/lib/cart/store";
 import { PRIMARY_LINKS } from "@/lib/navigation";
 import { CollectionMenu } from "./CollectionMenu";
 import { BagIcon, ChevronIcon, MenuIcon, SearchIcon } from "./icons";
@@ -24,8 +25,7 @@ export function Header() {
   const collectionButtonRef = useRef<HTMLButtonElement>(null);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // TODO(milestone 7): read from the cart store.
-  const bagCount: number = 0;
+  const bagCount = useBagCount();
 
   useEffect(() => {
     let lastY = window.scrollY;
@@ -157,7 +157,7 @@ export function Header() {
             >
               <BagIcon className="lg:hidden" />
               <span className="hidden lg:inline">Bag</span>
-              <span aria-hidden="true" className="tabular-nums">
+              <span key={bagCount} aria-hidden="true" className="anim-count tabular-nums">
                 ({bagCount})
               </span>
             </Link>

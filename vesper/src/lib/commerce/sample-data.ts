@@ -3,7 +3,8 @@
  * first"). Names, copy, prices and stock are illustrative and will be
  * replaced by the chosen commerce platform's data.
  */
-import type { Category, Colorway, Product, ProductModel } from "./types";
+import { CONTENT } from "./sample-content";
+import type { Category, Colorway, Product, ProductContent, ProductModel } from "./types";
 
 const RWF = (amount: number) => ({ amount, currencyCode: "RWF" });
 const EU = ["39", "40", "41", "42", "43", "44", "45", "46"];
@@ -41,7 +42,7 @@ export const CATEGORIES: Category[] = [
   { slug: "accessories", title: "Accessories", intro: "Small leather goods, edge‑painted and stitched by hand." },
 ];
 
-export const PRODUCTS: Product[] = [
+const BASE: Omit<Product, keyof ProductContent>[] = [
   {
     slug: "nocturne-low", title: "Nocturne Low", category: "sneakers", material: "Hand‑burnished calf",
     description: "A low, tapered sneaker in hand‑burnished calf, with tonal waxed stitching and a stitched rubber cupsole.",
@@ -167,3 +168,5 @@ export const PRODUCTS: Product[] = [
     ],
   },
 ];
+
+export const PRODUCTS: Product[] = BASE.map((p) => ({ ...p, ...CONTENT[p.slug] }));
