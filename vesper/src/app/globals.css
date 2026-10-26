@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    --header-h: 76px;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-ink font-sans text-ivory antialiased;
+  }
+  ::selection {
+    @apply bg-bronze/40 text-ivory;
+  }
+  :focus-visible {
+    outline: 1px solid theme("colors.ivory");
+    outline-offset: 4px;
+  }
+}
+
+@layer components {
+  .label {
+    @apply text-[11px] uppercase tracking-label sm:text-xs;
+  }
+  .page-x {
+    @apply px-5 sm:px-8 lg:px-16;
+  }
+  /* Underline that draws left→right on hover / focus (Step 7 · hover). */
+  .link-draw {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0% 1px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size 300ms theme("transitionTimingFunction.glide");
+    padding-bottom: 4px;
+  }
+  .link-draw:hover,
+  .link-draw:focus-visible,
+  .link-draw[aria-current="page"] {
+    background-size: 100% 1px;
+  }
+}
+
+/* Step 7 · reduced motion: movement becomes short fades, content is unchanged. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 200ms !important;
+    transition-property: opacity, color, background-color, border-color !important;
+    scroll-behavior: auto !important;
+  }
+}
