@@ -13,7 +13,9 @@ export interface Chapter {
   shot: string;
   /** Where the camera "looks" on the poster while this chapter is active. */
   focus: { x: number; y: number; scale: number };
-  hotspot: { x: string; y: string; label: string };
+  hotspot: { x: string; y: string; label: string; anchor: string };
+  /** Live 3D camera for this chapter: angles in radians, distance relative to the opening shot. */
+  camera: { azimuth: number; elevation: number; distance: number; anchor?: string };
 }
 
 export const hero = {
@@ -25,6 +27,8 @@ export const hero = {
   shot: "Nocturne Low in black calf on the studio floor, lit by a single warm key light",
   /** STAND-IN render until campaign photography / the GLB model is delivered. */
   src: "/media/home/hero-nocturne.webp",
+  /** The live 3D stage uses this product and colourway, framed like the still. */
+  model: { slug: "nocturne-low", colorway: "black-calf", framing: 2.1 },
 };
 
 export const chapters: Chapter[] = [
@@ -35,7 +39,8 @@ export const chapters: Chapter[] = [
     body: "A low, tapered profile cut from a single piece of full‑grain calf, so no seam interrupts the line.",
     shot: "Front three‑quarter view of the Nocturne Low",
     focus: { x: 0, y: 0, scale: 1 },
-    hotspot: { x: "34%", y: "52%", label: "Single‑piece calf upper" },
+    hotspot: { x: "34%", y: "52%", label: "Single‑piece calf upper", anchor: "HS_material" },
+    camera: { azimuth: 0.62, elevation: 0.2, distance: 1 },
   },
   {
     id: "stitch",
@@ -44,7 +49,8 @@ export const chapters: Chapter[] = [
     body: "Tonal waxed thread, eight stitches to the inch, matched by hand to every colour.",
     shot: "Close view of the tonal stitching along the collar",
     focus: { x: -12, y: 8, scale: 1.55 },
-    hotspot: { x: "58%", y: "38%", label: "Waxed tonal stitching" },
+    hotspot: { x: "58%", y: "38%", label: "Waxed tonal stitching", anchor: "HS_stitch" },
+    camera: { azimuth: 1.05, elevation: 0.55, distance: 0.42, anchor: "HS_stitch" },
   },
   {
     id: "sole",
@@ -53,7 +59,8 @@ export const chapters: Chapter[] = [
     body: "A natural rubber cupsole, stitched rather than glued, so a cobbler can resole it for years.",
     shot: "Low angle on the stitched rubber cupsole",
     focus: { x: 6, y: -14, scale: 1.4 },
-    hotspot: { x: "46%", y: "68%", label: "Stitched rubber cupsole" },
+    hotspot: { x: "46%", y: "68%", label: "Stitched rubber cupsole", anchor: "HS_sole" },
+    camera: { azimuth: 0.15, elevation: 0.04, distance: 0.5, anchor: "HS_sole" },
   },
 ];
 

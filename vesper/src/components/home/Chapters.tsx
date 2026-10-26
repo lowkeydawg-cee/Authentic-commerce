@@ -1,10 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import { Poster } from "@/components/media/Poster";
+import { detectCapability, type Capability } from "@/components/viewer/capability";
+import type { StageDriver } from "@/components/viewer/HomeStage3D";
 import { chapters, hero } from "@/content/home";
+import { PRODUCTS } from "@/lib/commerce/sample-data";
+import type { StandinSpec } from "@/three/standins";
 import { Reveal } from "./Reveal";
+
+const HomeStage3D = dynamic(() => import("@/components/viewer/HomeStage3D"), { ssr: false });
 
 /**
  * Layout 1 · camera chapters. On desktop with motion allowed, the product stays
@@ -29,6 +36,34 @@ function PinnedChapters() {
   const rootRef = useRef<HTMLDivElement>(null);
   const cameraRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
+  // Milestone 6: on capable desktops a live model replaces the still.
+  const [capability, setCapability] = useState<Capability | null>(null);
+  const [near, setNear] = useState(false);
+  const [stageReady, setStageReady] = useState(false);
+  const [stageFailed, setStageFailed] = useState(false);
+  const driver = useRef<StageDriver>({ progress: 0 });
+  const live = !!capability?.auto && capability.tier === "high" && !stageFailed;
+
+  const spec = useMemo<StandinSpec>(() => {
+    const product = PRODUCTS.find((p) => p.slug === hero.model.slug)!;
+    const colorway = product.colorways.find((c) => c.id === hero.model.colorway)!;
+    return { kind: product.model.kind, style: product.model.style, finishes: colorway.finishes, framing: hero.model.framing } as StandinSpec;
+  }, []);
+  const keyframes = useMemo(
+    () => chapters.map((c) => ({ ...c.camera, label: { anchor: c.hotspot.anchor, text: c.hotspot.label } })),
+    [],
+  );
+
+  useEffect(() => {
+    if (!window.matchMedia("(min-width: 1024px)").matches) return;
+    setCapability(detectCapability());
+    // Fetch the 3D code only as the chapters approach the viewport.
+    const el = rootRef.current;
+    if (!el || !("IntersectionObserver" in window)) return setNear(true);
+    const io = new IntersectionObserver(([e]) => e.isIntersecting && (setNear(true), io.disconnect()), { rootMargin: "100% 0px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   useEffect(() => {
     let cleanup = () => {};
@@ -68,13 +103,23 @@ function PinnedChapters() {
           },
         });
 
+        // The live stage reads this (scrubbed, so it lags with the same cinematic feel).
+        const proxy = { p: 0 };
+        tl.eventCallback("onUpdate", () => {
+          driver.current.progress = proxy.p;
+          driver.current.invalidate?.();
+        });
+
         chapters.slice(1).forEach((chapter, i) => {
           const at = i;
-          tl.to(camera, { xPercent: chapter.focus.x, yPercent: chapter.focus.y, scale: chapter.focus.scale }, at)
-            .to(texts[i], { autoAlpha: 0, y: -24, duration: 0.4 }, at)
-            .to(spots[i], { autoAlpha: 0, duration: 0.3 }, at)
-            .to(texts[i + 1], { autoAlpha: 1, y: 0, duration: 0.5 }, at + 0.5)
-            .to(spots[i + 1], { autoAlpha: 1, duration: 0.4 }, at + 0.6);
+          tl.to(proxy, { p: i + 1, ease: "none" }, at);
+          if (!live) {
+            tl.to(camera, { xPercent: chapter.focus.x, yPercent: chapter.focus.y, scale: chapter.focus.scale }, at)
+              .to(spots[i], { autoAlpha: 0, duration: 0.3 }, at)
+              .to(spots[i + 1], { autoAlpha: 1, duration: 0.4 }, at + 0.6);
+          }
+          tl.to(texts[i], { autoAlpha: 0, y: -24, duration: 0.4 }, at)
+            .to(texts[i + 1], { autoAlpha: 1, y: 0, duration: 0.5 }, at + 0.5);
         });
 
         return () => {
@@ -88,7 +133,7 @@ function PinnedChapters() {
       cancelled = true;
       cleanup();
     };
-  }, []);
+  }, [live]);
 
   return (
     <div
@@ -97,11 +142,28 @@ function PinnedChapters() {
       className="relative hidden lg:block motion-reduce:!hidden [@media(scripting:none)]:!hidden"
     >
       <div className="sticky top-0 h-screen overflow-hidden">
-        <div ref={cameraRef} className="absolute inset-0 origin-center will-change-transform">
+        <div
+          ref={cameraRef}
+          className={clsx(
+            "absolute inset-0 origin-center will-change-transform transition-opacity duration-[400ms] ease-camera",
+            live && stageReady && "opacity-0",
+          )}
+        >
           <Poster shot={hero.shot} src={hero.src} tone="ink" quiet className="h-full w-full" />
         </div>
-        {/* Hotspots sit outside the camera layer so labels stay crisp at any zoom. */}
-        {chapters.map((c) => (
+        {live && near && capability && (
+          <HomeStage3D
+            spec={spec}
+            keyframes={keyframes}
+            driver={driver}
+            dpr={capability.dpr}
+            shadows={capability.shadows}
+            onReady={() => setStageReady(true)}
+            onError={() => setStageFailed(true)}
+          />
+        )}
+        {/* Still mode: hotspots sit outside the camera layer so labels stay crisp at any zoom. */}
+        {!live && chapters.map((c) => (
           <div
             key={c.id}
             data-chapter-spot=""
