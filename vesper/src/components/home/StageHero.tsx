@@ -10,7 +10,7 @@ export function StageHero() {
   return (
     <section aria-labelledby="hero-title" className="relative flex min-h-[640px] flex-col overflow-hidden h-[100svh]">
       <div className="anim-stage absolute inset-0" style={{ animationDelay: "100ms" }}>
-        <Poster shot={hero.shot} tone="ink" priority quiet className="h-full w-full" />
+        <Poster shot={hero.shot} src={hero.src} tone="ink" priority quiet className="h-full w-full" />
       </div>
 
       <h1 id="hero-title" className="relative flex flex-1 flex-col justify-between font-display font-normal leading-[0.98]">
@@ -25,11 +25,6 @@ export function StageHero() {
           </em>
         </span>
       </h1>
-
-      <p className="label anim-fade absolute left-1/2 top-[46%] -translate-x-1/2 text-center text-smoke" style={{ animationDelay: "900ms" }}>
-        <span className="sr-only">Featured: </span>
-        {hero.product.name}
-      </p>
 
       <div className="page-x absolute inset-x-0 bottom-0 flex flex-wrap items-end justify-between gap-6 pb-8 sm:pb-12">
         <div className="anim-fade flex flex-wrap items-center gap-x-6 gap-y-3" style={{ animationDelay: "1100ms" }}>

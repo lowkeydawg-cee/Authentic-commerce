@@ -21,6 +21,7 @@ export function CategoryTiles() {
               <div className="overflow-hidden">
                 <Poster
                   shot={c.shot}
+                  src={c.src}
                   tone={c.tone}
                   quiet
                   sizes="(min-width: 1280px) 20vw, (min-width: 640px) 33vw, 50vw"

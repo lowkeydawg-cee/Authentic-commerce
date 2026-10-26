@@ -98,7 +98,7 @@ function PinnedChapters() {
     >
       <div className="sticky top-0 h-screen overflow-hidden">
         <div ref={cameraRef} className="absolute inset-0 origin-center will-change-transform">
-          <Poster shot={hero.shot} tone="ink" quiet className="h-full w-full" />
+          <Poster shot={hero.shot} src={hero.src} tone="ink" quiet className="h-full w-full" />
         </div>
         {/* Hotspots sit outside the camera layer so labels stay crisp at any zoom. */}
         {chapters.map((c) => (
@@ -160,7 +160,7 @@ function StackedChapters() {
                 className="absolute inset-0 origin-center"
                 style={{ transform: `translate(${c.focus.x}%, ${c.focus.y}%) scale(${c.focus.scale})` }}
               >
-                <Poster shot={c.shot} tone="ink" quiet className="h-full w-full" />
+                <Poster shot={c.shot} src={hero.src} tone="ink" quiet sizes="100vw" className="h-full w-full" />
               </div>
               <span className="label absolute bottom-4 left-4 bg-ink/70 px-3 py-1.5 text-ivory">{c.hotspot.label}</span>
             </div>

@@ -22,7 +22,9 @@ export const hero = {
   headlineBottom: "the after‑hours.",
   product: { name: "Nocturne Low", href: "/products/nocturne-low" },
   cta: { label: "Discover the Nocturne", href: "/collections/the-nocturne" },
-  shot: "Nocturne Low in black calf on black velvet, lit by a single hard key light",
+  shot: "Nocturne Low in black calf on the studio floor, lit by a single warm key light",
+  /** STAND-IN render until campaign photography / the GLB model is delivered. */
+  src: "/media/home/hero-nocturne.webp",
 };
 
 export const chapters: Chapter[] = [
@@ -55,12 +57,12 @@ export const chapters: Chapter[] = [
   },
 ];
 
-export const categories: { label: string; href: string; tone: PosterTone; shot: string }[] = [
-  { label: "Sneakers", href: "/collections/sneakers", tone: "ink", shot: "Nocturne Low sneakers on a velvet plinth" },
-  { label: "Shoes", href: "/collections/shoes", tone: "oxblood", shot: "Oxblood loafer in raking light" },
-  { label: "T‑shirts", href: "/collections/t-shirts", tone: "graphite", shot: "Heavyweight tee folded on stone" },
-  { label: "Jackets", href: "/collections/jackets", tone: "ink", shot: "Midnight wool overcoat on a dark form" },
-  { label: "Accessories", href: "/collections/accessories", tone: "bronze", shot: "Calf card holder and belt on black glass" },
+export const categories: { label: string; href: string; tone: PosterTone; shot: string; src: string }[] = [
+  { label: "Sneakers", href: "/collections/sneakers", tone: "ink", shot: "Nocturne Low in black calf", src: "/media/products/nocturne-low/black-calf-front.webp" },
+  { label: "Shoes", href: "/collections/shoes", tone: "oxblood", shot: "Vesper Loafer in oxblood calf", src: "/media/products/vesper-loafer/oxblood-calf-front.webp" },
+  { label: "T‑shirts", href: "/collections/t-shirts", tone: "graphite", shot: "Heavyweight Tee in ivory", src: "/media/products/heavyweight-tee/ivory-front.webp" },
+  { label: "Jackets", href: "/collections/jackets", tone: "ink", shot: "Field Jacket in olive waxed cotton", src: "/media/products/field-jacket/olive-front.webp" },
+  { label: "Accessories", href: "/collections/accessories", tone: "bronze", shot: "Night Tote in oxblood calf", src: "/media/products/night-tote/oxblood-front.webp" },
 ];
 
 export const film = {
