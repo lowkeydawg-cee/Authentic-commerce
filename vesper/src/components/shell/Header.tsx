@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { openBag } from "@/lib/cart/events";
 import { useBagCount } from "@/lib/cart/store";
 import { PRIMARY_LINKS } from "@/lib/navigation";
 import { CollectionMenu } from "./CollectionMenu";
@@ -152,6 +153,13 @@ export function Header() {
             </Link>
             <Link
               href="/bag"
+              onClick={(e) => {
+                // With JavaScript, open the mini-bag in place; the link stays as a fallback.
+                if (pathname === "/bag" || pathname === "/checkout") return;
+                e.preventDefault();
+                openBag();
+              }}
+              aria-haspopup="dialog"
               aria-label={`Bag, ${bagCount} ${bagCount === 1 ? "item" : "items"}`}
               className="label -mr-3 flex h-11 min-w-11 items-center justify-center gap-2 px-3 sm:mr-0 sm:px-0"
             >

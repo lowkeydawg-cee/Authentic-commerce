@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import clsx from "clsx";
 import { useEffect, useId, useRef, useState } from "react";
 import { ProductImage } from "@/components/media/ProductImage";
+import { openBag } from "@/lib/cart/events";
 import { bag } from "@/lib/cart/store";
 import type { Product } from "@/lib/commerce/types";
 import { formatMoney } from "@/lib/format";
@@ -71,6 +72,7 @@ export function ProductExperience({ product, initialColour }: { product: Product
     }
     bag.add({ slug: product.slug, colorwayId: colourway.id, size });
     setStatus("added");
+    openBag(true);
   };
 
   useEffect(() => {

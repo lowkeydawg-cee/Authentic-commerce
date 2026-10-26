@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Jost, Playfair_Display } from "next/font/google";
+import { BagDrawer } from "@/components/bag/BagDrawer";
 import { Footer } from "@/components/shell/Footer";
 import { Header } from "@/components/shell/Header";
 import "./globals.css";
@@ -42,6 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
         </main>
         <Footer />
+        <BagDrawer />
       </body>
     </html>
   );
