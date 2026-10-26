@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import clsx from "clsx";
@@ -8,10 +9,17 @@ import { ProductImage } from "@/components/media/ProductImage";
 import { bag } from "@/lib/cart/store";
 import type { Product } from "@/lib/commerce/types";
 import { formatMoney } from "@/lib/format";
+import { detectCapability, type Capability } from "@/components/viewer/capability";
+import type { StandinSpec } from "@/three/standins";
+import { HOTSPOT_EVENT } from "./hotspot-event";
 import { SizeGuide } from "./SizeGuide";
 
-type View = "front" | "alt";
-const VIEW_LABEL: Record<View, string> = { front: "Front", alt: "Profile" };
+// The viewer (three.js + R3F) loads only when 3D is actually shown.
+const ProductViewer = dynamic(() => import("@/components/viewer/ProductViewer"), { ssr: false });
+
+type PhotoView = "front" | "alt";
+type View = "3d" | PhotoView;
+const VIEW_LABEL: Record<PhotoView, string> = { front: "Front", alt: "Profile" };
 
 /** Reads ?colour= on the client so the page itself can stay statically generated. */
 export function ProductExperienceWithUrl({ product }: { product: Product }) {
@@ -31,6 +39,14 @@ export function ProductExperience({ product, initialColour }: { product: Product
   const buyRef = useRef<HTMLButtonElement>(null);
   const [buyVisible, setBuyVisible] = useState(true);
   const id = useId();
+  const galleryRef = useRef<HTMLElement>(null);
+  const [capability, setCapability] = useState<Capability | null>(null);
+  const [viewerReady, setViewerReady] = useState(false);
+  const [viewerFailed, setViewerFailed] = useState(false);
+  const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
+  const [slowLoad, setSlowLoad] = useState(false);
+  const [env, setEnv] = useState({ reduced: false, mobile: false });
+  const can3d = capability !== null && capability.tier !== "none" && !viewerFailed;
 
   const colourway = product.colorways.find((c) => c.id === colourId)!;
   const soldOut = (s: string) => colourway.soldOutSizes.includes(s);
@@ -85,6 +101,42 @@ export function ProductExperience({ product, initialColour }: { product: Product
     };
   }, []);
 
+  // Decide on 3D once per visit: auto-start on capable desktops, tap-to-start elsewhere.
+  useEffect(() => {
+    const cap = detectCapability();
+    setCapability(cap);
+    setEnv({
+      reduced: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+      mobile: window.matchMedia("(pointer: coarse)").matches,
+    });
+    if (cap.auto) setView("3d");
+  }, []);
+
+  const show3d = () => {
+    setViewerReady(false);
+    setView("3d");
+  };
+
+  // "View in 3D" links in How it's made jump the viewer to that detail.
+  useEffect(() => {
+    const onHotspot = (e: Event) => {
+      const hotspotId = (e as CustomEvent<string>).detail;
+      galleryRef.current?.scrollIntoView({ behavior: env.reduced ? "auto" : "smooth", block: "start" });
+      if (!can3d) return;
+      if (view !== "3d") show3d();
+      setActiveHotspot(hotspotId);
+    };
+    window.addEventListener(HOTSPOT_EVENT, onHotspot);
+    return () => window.removeEventListener(HOTSPOT_EVENT, onHotspot);
+  });
+
+  // Only mention loading if the model takes longer than 2 s (Step 7 · page loading).
+  useEffect(() => {
+    if (view !== "3d" || viewerReady) return setSlowLoad(false);
+    const t = setTimeout(() => setSlowLoad(true), 2000);
+    return () => clearTimeout(t);
+  }, [view, viewerReady]);
+
   // After a "choose a size" nudge, move focus to the first available size.
   useEffect(() => {
     if (nudge > 0) sizeGroupRef.current?.querySelector<HTMLInputElement>("input:not(:disabled)")?.focus();
@@ -98,29 +150,81 @@ export function ProductExperience({ product, initialColour }: { product: Product
 
   return (
     <div className="grid gap-y-10 lg:grid-cols-[minmax(0,1.5fr)_minmax(380px,1fr)]">
-      {/* ── Gallery / viewer ─────────────────────────────── */}
-      <section aria-label={`${product.title} images`} className="min-w-0">
+      {/* ── Gallery / 3D viewer ──────────────────────────── */}
+      <section ref={galleryRef} aria-label={`${product.title} images and 3D view`} className="min-w-0 scroll-mt-[calc(var(--header-h)+16px)]">
         <div className="relative aspect-[4/5] sm:aspect-[5/4] lg:aspect-auto lg:h-[calc(100svh-var(--header-h)-120px)] lg:min-h-[560px]">
-          <ProductImage
-            key={colourway.images[view]}
-            src={colourway.images[view]}
-            alt={`${product.title} in ${colourway.name}, ${VIEW_LABEL[view].toLowerCase()} view`}
-            sizes="(min-width: 1024px) 60vw, 100vw"
-            priority
-            className="anim-crossfade absolute inset-0"
-          />
-          <p className="label absolute bottom-5 left-5 text-smoke">
-            {colourway.name} · {VIEW_LABEL[view]}
-          </p>
+          {view === "3d" && capability ? (
+            <>
+              {/* Poster stays until the model's first frame, then crossfades out. */}
+              <ProductImage
+                src={colourway.images.front}
+                alt=""
+                sizes="(min-width: 1024px) 60vw, 100vw"
+                priority
+                className={clsx("pointer-events-none absolute inset-0 transition-opacity duration-[400ms] ease-camera", viewerReady ? "opacity-0" : "opacity-100")}
+              />
+              <ProductViewer
+                spec={{ kind: product.model.kind, style: product.model.style, finishes: colourway.finishes, framing: product.model.framing } as StandinSpec}
+                angle={product.model.angles.front}
+                hotspots={product.highlights}
+                activeId={activeHotspot}
+                onActiveChange={setActiveHotspot}
+                capability={capability}
+                reducedMotion={env.reduced}
+                mobile={env.mobile}
+                label={`${product.title} in ${colourway.name}`}
+                onReady={() => setViewerReady(true)}
+                onError={() => {
+                  setViewerFailed(true);
+                  setView("front");
+                }}
+              />
+              {slowLoad && <div className="label pointer-events-none absolute inset-x-0 top-0 h-px origin-left animate-pulse bg-ivory" aria-hidden="true" />}
+              {product.model.standin && (
+                <p className="label pointer-events-none absolute left-4 top-4 bg-ink/60 px-2.5 py-1 text-smoke backdrop-blur-sm">Stand‑in model</p>
+              )}
+            </>
+          ) : (
+            <>
+              <ProductImage
+                key={colourway.images[view === "3d" ? "front" : view]}
+                src={colourway.images[view === "3d" ? "front" : view]}
+                alt={`${product.title} in ${colourway.name}, ${VIEW_LABEL[view === "3d" ? "front" : view].toLowerCase()} view`}
+                sizes="(min-width: 1024px) 60vw, 100vw"
+                priority
+                className="anim-crossfade absolute inset-0"
+              />
+              <p className="label absolute bottom-5 left-5 text-smoke">
+                {colourway.name} · {VIEW_LABEL[view === "3d" ? "front" : view]}
+              </p>
+            </>
+          )}
         </div>
         <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-6" role="group" aria-label="Choose a view">
-          {(Object.keys(VIEW_LABEL) as View[]).map((v) => (
+          {can3d && (
+            <button
+              type="button"
+              aria-pressed={view === "3d"}
+              aria-label="View in 3D"
+              onClick={show3d}
+              className={clsx(
+                "relative grid aspect-square place-items-center border bg-[radial-gradient(ellipse_at_50%_45%,#3A3430_0%,#121111_75%)] transition-colors duration-quick",
+                view === "3d" ? "border-ivory" : "border-transparent hover:border-line",
+              )}
+            >
+              <span className="font-display text-2xl">3D</span>
+            </button>
+          )}
+          {(Object.keys(VIEW_LABEL) as PhotoView[]).map((v) => (
             <button
               key={v}
               type="button"
               aria-pressed={view === v}
               aria-label={`${VIEW_LABEL[v]} view`}
-              onClick={() => setView(v)}
+              onClick={() => {
+                setView(v);
+                setActiveHotspot(null);
+              }}
               className={clsx(
                 "relative aspect-square border transition-colors duration-quick",
                 view === v ? "border-ivory" : "border-transparent hover:border-line",
@@ -130,6 +234,11 @@ export function ProductExperience({ product, initialColour }: { product: Product
             </button>
           ))}
         </div>
+        {viewerFailed && (
+          <p role="status" className="mt-3 text-sm text-mist">
+            3D isn&apos;t available on this device, so we&apos;re showing photographs.
+          </p>
+        )}
       </section>
 
       {/* ── Buy panel ────────────────────────────────────── */}

@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { Reveal } from "@/components/home/Reveal";
 import { ProductExperience, ProductExperienceWithUrl } from "@/components/product/ProductExperience";
+import { ViewIn3D } from "@/components/product/ViewIn3D";
 import { commerce } from "@/lib/commerce";
 
 type Params = Promise<{ slug: string }>;
@@ -83,6 +84,7 @@ export default async function ProductPage({ params }: { params: Params }) {
                 <p className="label text-bronze">{h.kicker}</p>
                 <h3 className="mt-3 font-display text-2xl">{h.title}</h3>
                 <p className="mt-3 text-[15px] font-light leading-relaxed text-mist">{h.body}</p>
+                <ViewIn3D id={h.id} title={h.title} />
               </Reveal>
             ))}
           </ul>
