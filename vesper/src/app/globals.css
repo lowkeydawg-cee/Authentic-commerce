@@ -45,6 +45,46 @@
   }
 }
 
+/* Step 7 · page load: the stage lights up, headline lines rise from a mask. */
+:root {
+  --hero-ms: 1500ms;
+}
+@media (max-width: 767px) {
+  :root {
+    --hero-ms: 1000ms;
+  }
+}
+@keyframes stage-light {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes line-rise {
+  from { transform: translateY(108%); }
+  to { transform: translateY(0); }
+}
+@keyframes fade-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.anim-stage {
+  animation: stage-light var(--hero-ms) cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.anim-line {
+  animation: line-rise var(--hero-ms) cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.anim-fade {
+  animation: fade-rise calc(var(--hero-ms) * 0.7) cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Without JavaScript, scroll reveals must never hide content. */
+@media (scripting: none) {
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+  }
+}
+
 /* Step 7 · reduced motion: movement becomes short fades, content is unchanged. */
 @media (prefers-reduced-motion: reduce) {
   *,
