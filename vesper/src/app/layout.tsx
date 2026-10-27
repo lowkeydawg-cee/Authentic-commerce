@@ -3,6 +3,7 @@ import { Jost, Playfair_Display } from "next/font/google";
 import { BagDrawer } from "@/components/bag/BagDrawer";
 import { Footer } from "@/components/shell/Footer";
 import { Header } from "@/components/shell/Header";
+import { SITE_URL } from "@/content/site";
 import "./globals.css";
 
 const display = Playfair_Display({
@@ -20,6 +21,7 @@ const sans = Jost({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: { default: "VESPER — Dressed for the after-hours", template: "%s · VESPER" },
   description: "Sneakers, shoes, outerwear and accessories, crafted for the after-hours. Explore every piece in 3D.",
 };

@@ -96,6 +96,8 @@ export interface ProductQuery {
   colors?: string[]; // colour family ids
   sizes?: string[];
   sort?: SortKey;
+  /** Free-text search: every word must match the title, material, description, category or a colour. */
+  search?: string;
 }
 
 export interface CommerceProvider {

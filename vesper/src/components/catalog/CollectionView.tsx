@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageHeader } from "@/components/editorial/PageHeader";
 import { Reveal } from "@/components/home/Reveal";
 import { commerce, type ColorFamily, type ProductQuery, type SortKey } from "@/lib/commerce";
 import { FilterBar } from "./FilterBar";
@@ -34,13 +35,7 @@ export async function CollectionView({ eyebrow, title, intro, base, searchParams
 
   return (
     <>
-      <header className="page-x mx-auto max-w-page pb-14 pt-[calc(var(--header-h)+72px)] lg:pb-20">
-        <Reveal eager>
-          <p className="label text-smoke">{eyebrow}</p>
-          <h1 className="mt-4 font-display text-[clamp(52px,7vw,112px)] leading-[0.95]">{title}</h1>
-          <p className="mt-6 max-w-xl text-[17px] font-light leading-relaxed text-mist">{intro}</p>
-        </Reveal>
-      </header>
+      <PageHeader eyebrow={eyebrow} title={title} intro={intro} />
 
       <FilterBar
         current={{ colour: colors, size: sizes, sort }}

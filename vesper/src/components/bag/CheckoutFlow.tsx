@@ -7,24 +7,11 @@ import { saveOrder, orderReference, type DemoOrder } from "@/lib/cart/orders";
 import { resolveLines, subtotal, type ResolvedLine } from "@/lib/cart/resolve";
 import { bag, useBag } from "@/lib/cart/store";
 import type { Money } from "@/lib/commerce/types";
+import { COUNTRIES, DELIVERY, PAYMENT } from "@/lib/delivery";
 import { formatMoney } from "@/lib/format";
 import { BagLines } from "./BagLines";
 
 const STEPS = ["Details", "Delivery", "Payment", "Confirmation"] as const;
-
-/** Sample delivery options for the prototype; real rates come from the commerce platform. */
-const DELIVERY = [
-  { id: "standard", label: "Standard delivery", note: "2–4 business days", fee: 0 },
-  { id: "express", label: "Express courier", note: "Next business day in Kigali", fee: 10000 },
-] as const;
-
-const PAYMENT = [
-  { id: "card", label: "Card", note: "Visa, Mastercard" },
-  { id: "mtn", label: "MTN Mobile Money", note: "Approve on your phone" },
-  { id: "airtel", label: "Airtel Money", note: "Approve on your phone" },
-] as const;
-
-const COUNTRIES = ["Rwanda", "Burundi", "Democratic Republic of the Congo", "Kenya", "Tanzania", "Uganda"];
 
 interface Form {
   email: string;
@@ -214,7 +201,7 @@ export function CheckoutFlow() {
           {step === 0 && (
             <form onSubmit={next} noValidate className="space-y-6">
               <h1 ref={headingRef} tabIndex={-1} className="font-display text-4xl outline-none sm:text-5xl">Your details</h1>
-              <p className="text-sm text-mist">Guest checkout. You can create an account after your order.</p>
+              <p className="text-sm text-mist">Guest checkout. Your order will also appear in your account on this device.</p>
               {field("email", "Email", { type: "email", autoComplete: "email", required: true })}
               {field("name", "Full name", { autoComplete: "name", required: true })}
               {field("phone", "Phone", { type: "tel", autoComplete: "tel", required: true })}
@@ -294,7 +281,10 @@ export function CheckoutFlow() {
                 <div><dt className="label text-smoke">Ship to</dt><dd className="mt-1">{form.address}, {form.city}, {form.country}</dd></div>
                 <div><dt className="label text-smoke">Confirmation to</dt><dd className="mt-1">{order.record.email}</dd></div>
               </dl>
-              <Link href="/collections" className={primary}>Continue shopping</Link>
+              <div className="flex flex-wrap items-center gap-8">
+                <Link href="/collections" className={primary}>Continue shopping</Link>
+                <Link href="/account" className="label link-draw tap text-mist hover:text-ivory">View your orders</Link>
+              </div>
             </section>
           )}
         </div>

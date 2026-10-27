@@ -1,11 +1,12 @@
 "use client";
 
+import Form from "next/form";
 import Link from "next/link";
 import clsx from "clsx";
 import { fadeStyle } from "@/motion/fade";
 import { useEffect, useRef } from "react";
 import { CATEGORIES, HOUSE_LINKS, SUPPORT_LINKS } from "@/lib/navigation";
-import { CloseIcon } from "./icons";
+import { CloseIcon, SearchIcon } from "./icons";
 import { Wordmark } from "./Wordmark";
 
 interface Props {
@@ -85,6 +86,16 @@ export function MobileMenu({ open, onClose }: Props) {
         <Wordmark className="text-xl" />
         <span className="w-11" aria-hidden="true" />
       </div>
+
+      <Form action="/search" role="search" onSubmit={onClose} className="page-x mt-6 flex border-b border-line focus-within:border-ivory">
+        <label htmlFor="mobile-search" className="sr-only">
+          Search the collection
+        </label>
+        <input id="mobile-search" name="q" type="search" placeholder="Search" enterKeyHint="search" className="min-h-12 flex-1 bg-transparent text-[17px] text-ivory outline-none placeholder:text-smoke" />
+        <button type="submit" aria-label="Search" className="grid h-12 w-11 place-items-center">
+          <SearchIcon className="h-[18px] w-[18px]" />
+        </button>
+      </Form>
 
       <nav aria-label="Mobile" className="page-x flex flex-1 flex-col gap-12 py-10">
         <ul className="space-y-1">

@@ -15,7 +15,7 @@ export const BUDGET = {
   triangles: { footwear: 60_000, garment: 40_000, accessory: 40_000 },
   page: { firstLoadJsKB: 180, lcpMs: 3000, cls: 0.05 },
 };
-const ROUTES = ["/", "/collections", "/collections/sneakers", "/products/nocturne-low", "/bag", "/checkout"];
+const ROUTES = ["/", "/collections", "/collections/sneakers", "/products/nocturne-low", "/bag", "/checkout", "/journal", "/journal/chapter-i-the-nocturne", "/search?q=calf", "/account"];
 
 const failures = [];
 const row = (ok, label, value, limit) => {

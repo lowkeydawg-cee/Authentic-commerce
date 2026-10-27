@@ -14,3 +14,8 @@ export function formatMoney({ amount, currencyCode }: Money): string {
     return `${currencyCode} ${amount.toLocaleString("en-GB")}`;
   }
 }
+
+/** "1 October 2026" — fixed locale and time zone so server and client agree. */
+export function formatDate(iso: string): string {
+  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Kigali" }).format(new Date(iso));
+}

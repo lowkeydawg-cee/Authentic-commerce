@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import { SizeTable } from "@/components/editorial/SizeTable";
 import { APPAREL_SIZES, FOOTWEAR_SIZES } from "@/lib/fit";
 
 export function SizeGuide({ kind }: { kind: "footwear" | "apparel" }) {
@@ -26,37 +27,7 @@ export function SizeGuide({ kind }: { kind: "footwear" | "apparel" }) {
           </form>
         </div>
         <div className="space-y-6 p-6">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[420px] text-left text-sm tabular-nums">
-              <caption className="mb-4 text-left text-sm text-mist">{table.caption}</caption>
-              <thead>
-                <tr className="border-b border-line">
-                  {table.columns.map((c) => (
-                    <th key={c} scope="col" className="label py-3 pr-4 font-normal text-smoke">
-                      {c}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {table.rows.map((row) => (
-                  <tr key={row[0]} className="border-b border-line/60">
-                    {row.map((cell, i) =>
-                      i === 0 ? (
-                        <th key={i} scope="row" className="py-3 pr-4 font-normal">
-                          {cell}
-                        </th>
-                      ) : (
-                        <td key={i} className="py-3 pr-4 text-mist">
-                          {cell}
-                        </td>
-                      ),
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <SizeTable kind={kind} />
           <p className="text-sm leading-relaxed text-mist">
             <span className="text-ivory">How to measure: </span>
             {table.howTo}
