@@ -10,16 +10,18 @@ interface RevealProps {
   variant?: "rise" | "wipe";
   delay?: number;
   as?: "div" | "li" | "section";
+  /** Above-the-fold content: render visible at once, no reveal (keeps LCP fast). */
+  eager?: boolean;
 }
 
 /** Animates once when the element first scrolls into view. */
-export function Reveal({ children, className, variant = "rise", delay = 0, as: Tag = "div" }: RevealProps) {
+export function Reveal({ children, className, variant = "rise", delay = 0, as: Tag = "div", eager = false }: RevealProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [shown, setShown] = useState(false);
+  const [shown, setShown] = useState(eager);
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || eager) return;
     if (!("IntersectionObserver" in window)) {
       setShown(true);
       return;
@@ -35,7 +37,7 @@ export function Reveal({ children, className, variant = "rise", delay = 0, as: T
     );
     io.observe(el);
     return () => io.disconnect();
-  }, []);
+  }, [eager]);
 
   return (
     <Tag

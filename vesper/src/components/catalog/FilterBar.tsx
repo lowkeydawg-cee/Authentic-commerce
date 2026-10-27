@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import clsx from "clsx";
 import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { COLOR_FAMILIES, type SortKey } from "@/lib/commerce/types";
@@ -14,6 +14,8 @@ const SORTS: { id: SortKey; label: string }[] = [
 ];
 
 interface Props {
+  /** Current filters, parsed on the server (no client-only render, no layout shift). */
+  current: { colour: string[]; size: string[]; sort: SortKey };
   count: number;
   availableColors: string[];
   availableSizes: string[];
@@ -23,20 +25,21 @@ interface Props {
  * Filters live in the URL (?colour=black,ivory&size=42&sort=newest) so views
  * are shareable, back-button friendly and rendered on the server.
  */
-export function FilterBar({ count, availableColors, availableSizes }: Props) {
+export function FilterBar({ current, count, availableColors, availableSizes }: Props) {
   const router = useRouter();
   const pathname = usePathname();
-  const params = useSearchParams();
+
   const [pending, startTransition] = useTransition();
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  const colours = params.get("colour")?.split(",").filter(Boolean) ?? [];
-  const sizes = params.get("size")?.split(",").filter(Boolean) ?? [];
-  const sort = (params.get("sort") as SortKey) ?? "featured";
+  const { colour: colours, size: sizes, sort } = current;
   const activeCount = colours.length + sizes.length;
 
   const update = (key: string, values: string[] | string | null) => {
-    const next = new URLSearchParams(params.toString());
+    const next = new URLSearchParams();
+    if (colours.length) next.set("colour", colours.join(","));
+    if (sizes.length) next.set("size", sizes.join(","));
+    if (sort !== "featured") next.set("sort", sort);
     const value = Array.isArray(values) ? values.join(",") : values;
     if (value) next.set(key, value);
     else next.delete(key);

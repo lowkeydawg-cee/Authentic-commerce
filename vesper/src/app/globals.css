@@ -65,10 +65,6 @@
     --hero-ms: 1000ms;
   }
 }
-@keyframes stage-light {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
 @keyframes line-rise {
   from { transform: translateY(108%); }
   to { transform: translateY(0); }
@@ -77,8 +73,12 @@
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.anim-stage {
-  animation: stage-light var(--hero-ms) cubic-bezier(0.22, 1, 0.36, 1) both;
+@keyframes veil-lift {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+.anim-veil {
+  animation: veil-lift var(--hero-ms) cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .anim-line {
   animation: line-rise var(--hero-ms) cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -120,6 +120,9 @@
 
 /* Without JavaScript, scroll reveals must never hide content. */
 @media (scripting: none) {
+  .anim-veil {
+    display: none;
+  }
   [data-reveal] {
     opacity: 1 !important;
     transform: none !important;

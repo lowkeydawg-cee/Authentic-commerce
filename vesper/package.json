@@ -2,14 +2,15 @@
   "name": "vesper",
   "version": "0.1.0",
   "private": true,
-  "description": "VESPER — luxury editorial fashion storefront with 3D product views.",
+  "description": "VESPER \u2014 luxury editorial fashion storefront with 3D product views.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "render:standins": "node scripts/render/render.mjs"
+    "render:standins": "node scripts/render/render.mjs",
+    "perf:budget": "node scripts/perf/budget.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.8.2",

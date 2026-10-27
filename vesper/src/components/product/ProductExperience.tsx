@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import clsx from "clsx";
 import { useEffect, useId, useRef, useState } from "react";
 import { ProductImage } from "@/components/media/ProductImage";
@@ -10,8 +9,9 @@ import { openBag } from "@/lib/cart/events";
 import { bag } from "@/lib/cart/store";
 import type { Product } from "@/lib/commerce/types";
 import { formatMoney } from "@/lib/format";
-import { detectCapability, type Capability } from "@/components/viewer/capability";
+import { detectCapability, probeWebGL, type Capability } from "@/components/viewer/capability";
 import type { StandinSpec } from "@/three/standins";
+import { whenIdle } from "@/components/viewer/idle";
 import { HOTSPOT_EVENT } from "./hotspot-event";
 import { SizeGuide } from "./SizeGuide";
 
@@ -22,16 +22,12 @@ type PhotoView = "front" | "alt";
 type View = "3d" | PhotoView;
 const VIEW_LABEL: Record<PhotoView, string> = { front: "Front", alt: "Profile" };
 
-/** Reads ?colour= on the client so the page itself can stay statically generated. */
-export function ProductExperienceWithUrl({ product }: { product: Product }) {
-  const colour = useSearchParams().get("colour");
-  return <ProductExperience product={product} initialColour={colour} />;
-}
-
 export function ProductExperience({ product, initialColour }: { product: Product; initialColour?: string | null }) {
   const start = product.colorways.find((c) => c.id === initialColour) ?? product.colorways[0];
   const [colourId, setColourId] = useState(start.id);
   const [view, setView] = useState<View>("front");
+  // Crossfade only after the shopper changes colour or view, never on first paint (LCP).
+  const [interacted, setInteracted] = useState(false);
   const oneSize = product.sizes.length === 1;
   const [size, setSize] = useState<string | null>(oneSize ? product.sizes[0] : null);
   const [status, setStatus] = useState<"idle" | "needSize" | "added">("idle");
@@ -54,6 +50,7 @@ export function ProductExperience({ product, initialColour }: { product: Product
   const allSoldOut = product.sizes.every(soldOut);
 
   const chooseColour = (next: string) => {
+    setInteracted(true);
     setColourId(next);
     setStatus("idle");
     const cw = product.colorways.find((c) => c.id === next)!;
@@ -111,10 +108,19 @@ export function ProductExperience({ product, initialColour }: { product: Product
       reduced: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
       mobile: window.matchMedia("(pointer: coarse)").matches,
     });
-    if (cap.auto) setView("3d");
+    // Auto-start 3D only once the page has loaded and the browser is idle.
+    if (cap.auto) return whenIdle(() => setView((v) => (v === "front" ? "3d" : v)));
   }, []);
 
   const show3d = () => {
+    // Tap-to-start devices are probed only now, right before 3D is needed.
+    if (capability && !capability.verified) {
+      if (!probeWebGL()) {
+        setViewerFailed(true);
+        return;
+      }
+      setCapability({ ...capability, verified: true });
+    }
     setViewerReady(false);
     setView("3d");
   };
@@ -194,7 +200,7 @@ export function ProductExperience({ product, initialColour }: { product: Product
                 alt={`${product.title} in ${colourway.name}, ${VIEW_LABEL[view === "3d" ? "front" : view].toLowerCase()} view`}
                 sizes="(min-width: 1024px) 60vw, 100vw"
                 priority
-                className="anim-crossfade absolute inset-0"
+                className={clsx("absolute inset-0", interacted && "anim-crossfade")}
               />
               <p className="label absolute bottom-5 left-5 text-smoke">
                 {colourway.name} · {VIEW_LABEL[view === "3d" ? "front" : view]}
@@ -224,6 +230,7 @@ export function ProductExperience({ product, initialColour }: { product: Product
               aria-pressed={view === v}
               aria-label={`${VIEW_LABEL[v]} view`}
               onClick={() => {
+                setInteracted(true);
                 setView(v);
                 setActiveHotspot(null);
               }}

@@ -121,3 +121,42 @@ export function makeMaterial({ material, color }: Finish): THREE.MeshPhysicalMat
       return new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.28, metalness: 1 });
   }
 }
+
+/** Any builder's finishes, looked up by part key ("upper", "sole", "thread"…). */
+export type FinishSet = Record<string, Finish | undefined>;
+
+interface FinishTag {
+  chain: string[];
+  shade: number;
+  fallbackShade: number;
+}
+
+function shadeHex(hex: string, amount: number) {
+  const c = new THREE.Color(hex);
+  c.offsetHSL(0, 0, amount);
+  return `#${c.getHexString()}`;
+}
+
+/**
+ * Material for a model part. `chain` lists finish keys in fallback order
+ * (e.g. ["laces", "thread"]); the choice is recorded on the material so the
+ * model can be recoloured later without rebuilding its geometry.
+ */
+export function finishMaterial(f: FinishSet, chain: string[], shade = 0, fallbackShade = 0): THREE.MeshPhysicalMaterial {
+  const index = chain.findIndex((k) => f[k]);
+  const base = f[chain[Math.max(0, index)]]!;
+  const amount = index > 0 ? fallbackShade : shade;
+  const mat = makeMaterial(amount ? { ...base, color: shadeHex(base.color, amount) } : base);
+  mat.userData.finish = { chain, shade, fallbackShade } satisfies FinishTag;
+  return mat;
+}
+
+/** Swap every tagged material for the given finishes. Geometry is untouched. */
+export function recolor(root: THREE.Object3D, f: FinishSet) {
+  root.traverse((o) => {
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    const tag = (mesh.material as THREE.Material).userData?.finish as FinishTag | undefined;
+    if (tag) mesh.material = finishMaterial(f, tag.chain, tag.shade, tag.fallbackShade);
+  });
+}

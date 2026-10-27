@@ -6,6 +6,7 @@ import clsx from "clsx";
 import { Poster } from "@/components/media/Poster";
 import { detectCapability, type Capability } from "@/components/viewer/capability";
 import type { StageDriver } from "@/components/viewer/HomeStage3D";
+import { whenIdle } from "@/components/viewer/idle";
 import { chapters, hero } from "@/content/home";
 import { PRODUCTS } from "@/lib/commerce/sample-data";
 import type { StandinSpec } from "@/three/standins";
@@ -59,13 +60,39 @@ function PinnedChapters() {
     setCapability(detectCapability());
     // Fetch the 3D code only as the chapters approach the viewport.
     const el = rootRef.current;
-    if (!el || !("IntersectionObserver" in window)) return setNear(true);
-    const io = new IntersectionObserver(([e]) => e.isIntersecting && (setNear(true), io.disconnect()), { rootMargin: "100% 0px" });
+    // …and only once the page is idle, so 3D start-up never competes with first paint.
+    let cancelIdle = () => {};
+    const start = () => {
+      cancelIdle = whenIdle(() => setNear(true));
+    };
+    if (!el || !("IntersectionObserver" in window)) {
+      start();
+      return () => cancelIdle();
+    }
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      io.disconnect();
+      start();
+    }, { rootMargin: "100% 0px" });
     io.observe(el);
-    return () => io.disconnect();
+    return () => {
+      io.disconnect();
+      cancelIdle();
+    };
+  }, []);
+
+  // Milestone 9: GSAP + ScrollTrigger load only where the pinned sequence is shown.
+  const [pinned, setPinned] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 1024px) and (prefers-reduced-motion: no-preference)");
+    const update = () => setPinned(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
   }, []);
 
   useEffect(() => {
+    if (!pinned) return;
     let cleanup = () => {};
     let cancelled = false;
 
@@ -133,7 +160,7 @@ function PinnedChapters() {
       cancelled = true;
       cleanup();
     };
-  }, [live]);
+  }, [live, pinned]);
 
   return (
     <div

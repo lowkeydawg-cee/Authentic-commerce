@@ -49,12 +49,12 @@ export function widthAt(points: THREE.Vector2[], x: number, side: 1 | -1 = 1): n
   return best;
 }
 
-export function closedTube(points: THREE.Vector3[], radius: number, segments = 320): THREE.TubeGeometry {
-  return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points, true), segments, radius, 6, true);
+export function closedTube(points: THREE.Vector3[], radius: number, segments = 320, radial = 6): THREE.TubeGeometry {
+  return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points, true), segments, radius, radial, true);
 }
 
-export function openTube(points: THREE.Vector3[], radius: number, segments = 120): THREE.TubeGeometry {
-  return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points, false), segments, radius, 10, false);
+export function openTube(points: THREE.Vector3[], radius: number, segments = 120, radial = 10): THREE.TubeGeometry {
+  return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points, false), segments, radius, radial, false);
 }
 
 /** Soft "pillow" slab from a 2D silhouette, lying in the XY plane, thickness along Z. */

@@ -9,9 +9,11 @@ import { hero } from "@/content/home";
 export function StageHero() {
   return (
     <section aria-labelledby="hero-title" className="relative flex min-h-[640px] flex-col overflow-hidden h-[100svh]">
-      <div className="anim-stage absolute inset-0" style={{ animationDelay: "100ms" }}>
+      <div className="absolute inset-0">
         <Poster shot={hero.shot} src={hero.src} tone="ink" priority quiet className="h-full w-full" />
       </div>
+      {/* The stage "lights up" by fading a veil away, so the photo itself paints at once (LCP). */}
+      <div aria-hidden="true" className="anim-veil pointer-events-none absolute inset-0 bg-ink" style={{ animationDelay: "100ms" }} />
 
       <h1 id="hero-title" className="relative flex flex-1 flex-col justify-between font-display font-normal leading-[0.98]">
         <span className="page-x block overflow-hidden pt-[calc(var(--header-h)+6vh)]">

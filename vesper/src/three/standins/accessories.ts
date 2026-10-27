@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
-import { makeMaterial, type Finish } from "./materials";
+import { finishMaterial, type Finish, type FinishSet } from "./materials";
 import { closedTube, offsetOutline, openTube, pillow, sampleClosed } from "./shapes";
 
 /** STAND-IN accessories, replaced by Blender models with the same part names. */
@@ -37,21 +37,22 @@ function smooth(geo: THREE.BufferGeometry) {
 export function buildAccessory(style: AccessoryStyle, f: AccessoryFinishes): THREE.Group {
   const group = new THREE.Group();
   group.name = `standin_accessory_${style}`;
-  const thread = makeMaterial(f.thread);
+  const M = (chain: string[], shade = 0) => finishMaterial(f as unknown as FinishSet, chain, shade);
+  const thread = M(["thread"]);
 
   if (style === "cardholder") {
     const shell = roundedRect(0.62, 0.42, 0.04);
-    const body = new THREE.Mesh(smooth(pillow(shell, 0.05, 0.016)), makeMaterial(f.body));
+    const body = new THREE.Mesh(smooth(pillow(shell, 0.05, 0.016)), M(["body"]));
     body.name = "body";
     group.add(body);
     // Front pocket layer
     const pocket = roundedRect(0.62, 0.26, 0.04).map((p) => new THREE.Vector2(p.x, p.y - 0.08));
-    const pm = new THREE.Mesh(smooth(pillow(pocket, 0.016, 0.006)), makeMaterial(f.body));
+    const pm = new THREE.Mesh(smooth(pillow(pocket, 0.016, 0.006)), M(["body"]));
     pm.name = "pocket";
     pm.position.z = 0.028;
     group.add(pm);
     // Painted edge on the pocket mouth
-    const edge = new THREE.Mesh(openTube([new THREE.Vector3(-0.3, 0.05, 0.034), new THREE.Vector3(0, 0.052, 0.035), new THREE.Vector3(0.3, 0.05, 0.034)], 0.006), makeMaterial(f.edge ?? f.body));
+    const edge = new THREE.Mesh(openTube([new THREE.Vector3(-0.3, 0.05, 0.034), new THREE.Vector3(0, 0.052, 0.035), new THREE.Vector3(0.3, 0.05, 0.034)], 0.006), M(["edge", "body"]));
     edge.name = "edge";
     group.add(edge);
     group.add(Object.assign(new THREE.Mesh(closedTube(offsetOutline(shell, -0.022).map((p) => new THREE.Vector3(p.x, p.y, 0.026)), 0.0026), thread), { name: "stitch" }));
@@ -60,7 +61,7 @@ export function buildAccessory(style: AccessoryStyle, f: AccessoryFinishes): THR
     const v = new THREE.Shape();
     v.moveTo(-0.025, 0.03); v.lineTo(-0.015, 0.03); v.lineTo(0, -0.005); v.lineTo(0.015, 0.03);
     v.lineTo(0.025, 0.03); v.lineTo(0.004, -0.03); v.lineTo(-0.004, -0.03); v.closePath();
-    const logo = new THREE.Mesh(new THREE.ExtrudeGeometry(v, { depth: 0.002, bevelEnabled: false }), makeMaterial({ ...f.body, color: shade(f.body.color, -0.06) }));
+    const logo = new THREE.Mesh(new THREE.ExtrudeGeometry(v, { depth: 0.002, bevelEnabled: false }), M(["body"], -0.06));
     logo.name = "logo";
     logo.position.set(0, -0.09, 0.037);
     group.add(logo);
@@ -76,13 +77,13 @@ export function buildAccessory(style: AccessoryStyle, f: AccessoryFinishes): THR
     // Upright soft trapezoid body
     const face = sampleClosed([[-0.4, -0.38], [0, -0.385], [0.4, -0.38], [0.48, 0.38], [0, 0.375], [-0.48, 0.38]], 160);
     const raw = pillow(face, 0.18, 0.05);
-    const body = new THREE.Mesh(smooth(raw), makeMaterial(f.body));
+    const body = new THREE.Mesh(smooth(raw), M(["body"]));
     body.name = "body";
     group.add(body);
     // Opening with lining
     const mouth = new THREE.SphereGeometry(1, 48, 16);
     mouth.scale(0.44, 0.012, 0.045);
-    const lining = new THREE.Mesh(mouth, makeMaterial(f.lining ?? f.body));
+    const lining = new THREE.Mesh(mouth, M(["lining", "body"]));
     lining.name = "lining";
     lining.position.y = 0.385;
     group.add(lining);
@@ -92,7 +93,7 @@ export function buildAccessory(style: AccessoryStyle, f: AccessoryFinishes): THR
         const a = Math.PI * (i / 40);
         return new THREE.Vector3(Math.cos(a) * 0.17, 0.37 + Math.sin(a) * 0.36, z);
       });
-      const h = new THREE.Mesh(openTube(pts, 0.012), makeMaterial(f.edge ?? f.body));
+      const h = new THREE.Mesh(openTube(pts, 0.012), M(["edge", "body"]));
       h.name = "handles";
       group.add(h);
     }
@@ -123,8 +124,3 @@ function anchor(group: THREE.Group, name: string, p: THREE.Vector3) {
   group.add(o);
 }
 
-function shade(hex: string, amount: number) {
-  const c = new THREE.Color(hex);
-  c.offsetHSL(0, 0, amount);
-  return `#${c.getHexString()}`;
-}

@@ -216,7 +216,7 @@ interface ColorTween {
 }
 
 function Scene({ spec, angle, hotspots, activeId, reducedMotion, mobile, onReady, apiRef, spotRefs, onInteract }: SceneProps) {
-  const { camera, gl, invalidate, size } = useThree();
+  const { camera, gl, scene, invalidate, size } = useThree();
   const cam = camera as THREE.PerspectiveCamera;
   const specKey = JSON.stringify(spec);
   const [model, setModel] = useState<THREE.Group | null>(null);
@@ -278,17 +278,25 @@ function Scene({ spec, angle, hotspots, activeId, reducedMotion, mobile, onReady
       });
       colorTween.current = { start: performance.now(), ms: ms(duration.standard, 480), items };
     }
-    modelRef.current = next;
-    setModel(next);
-    invalidate();
+    let cancelled = false;
+    const show = () => {
+      if (cancelled) return;
+      modelRef.current = next;
+      setModel(next);
+      invalidate();
+    };
+    // First model: compile its shaders in the background (KHR_parallel_shader_compile
+    // where available) before it is shown, instead of blocking the first frame.
+    // Colour changes reuse the same shader programs, so they show at once.
+    if (prev) show();
+    else gl.compileAsync(next, cam, scene).then(show, show);
     return () => {
-      // Dispose the replaced model once the new one is in the scene.
+      cancelled = true;
+      // Dispose the replaced model's materials. Geometry is shared with the
+      // cached template (buildStandin), so it stays.
       if (prev) prev.traverse((o) => {
         const m = o as THREE.Mesh;
-        if (m.isMesh) {
-          m.geometry.dispose();
-          (Array.isArray(m.material) ? m.material : [m.material]).forEach((x) => x.dispose());
-        }
+        if (m.isMesh) (Array.isArray(m.material) ? m.material : [m.material]).forEach((x) => x.dispose());
       });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

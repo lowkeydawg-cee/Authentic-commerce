@@ -7,6 +7,9 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
  * the live 3D viewer so photos and 3D always match.
  */
 export function createStudio(renderer: THREE.WebGLRenderer, scene: THREE.Scene, { shadows = true } = {}) {
+  // Milestone 9: checking every program's link status forces shader compiles to
+  // finish synchronously (and defeats compileAsync). Keep it for development only.
+  renderer.debug.checkShaderErrors = process.env.NODE_ENV !== "production";
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -14,14 +17,15 @@ export function createStudio(renderer: THREE.WebGLRenderer, scene: THREE.Scene, 
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  // A 128px reflection map is plenty for soft studio reflections and much cheaper to build.
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04, 0.1, 100, { size: 128 }).texture;
   scene.environmentIntensity = 0.32;
 
   const key = new THREE.SpotLight("#ffe7cc", 38, 0, Math.PI / 7, 0.65, 1.6);
   key.position.set(-1.6, 2.6, 1.9);
   key.target.position.set(0, 0.1, 0);
   key.castShadow = shadows;
-  key.shadow.mapSize.set(2048, 2048);
+  key.shadow.mapSize.set(1024, 1024);
   key.shadow.radius = 6;
   key.shadow.bias = -0.0004;
   scene.add(key, key.target);

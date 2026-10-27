@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
-import { makeMaterial, type Finish } from "./materials";
+import { finishMaterial, type Finish, type FinishSet } from "./materials";
 import { closedTube, offsetOutline, openTube, pillow, sampleClosed } from "./shapes";
 
 /**
@@ -37,7 +37,8 @@ const SILHOUETTES: Record<GarmentStyle, P[]> = {
 export function buildGarment(style: GarmentStyle, f: GarmentFinishes): THREE.Group {
   const group = new THREE.Group();
   group.name = `standin_garment_${style}`;
-  const outline = sampleClosed(mirror(SILHOUETTES[style]), 240);
+  const M = (chain: string[]) => finishMaterial(f as unknown as FinishSet, chain);
+  const outline = sampleClosed(mirror(SILHOUETTES[style]), 170); // ~30k tris: inside the 20–40k apparel budget
   const thickness = style === "jacket" ? 0.07 : 0.045;
 
   // Body: pillowed silhouette with soft fabric folds on the top face.
@@ -54,11 +55,12 @@ export function buildGarment(style: GarmentStyle, f: GarmentFinishes): THREE.Gro
   }
   body.computeVertexNormals();
   const top = thickness / 2 + 0.006;
-  group.add(named(new THREE.Mesh(body, makeMaterial(f.body)), "body"));
+  group.add(named(new THREE.Mesh(body, M(["body"])), "body"));
 
-  const thread = makeMaterial(f.thread);
+  const thread = M(["thread"]);
+  // Thread is ~3 mm thick: 5 sides and few segments are enough (milestone 9 triangle budget).
   const stitch = (pts: THREE.Vector3[], name: string, closed = false) =>
-    group.add(named(new THREE.Mesh(closed ? closedTube(pts, 0.0028) : openTube(pts, 0.0028), thread), name));
+    group.add(named(new THREE.Mesh(closed ? closedTube(pts, 0.0028, 120, 5) : openTube(pts, 0.0028, 16, 5), thread), name));
   const line = (a: P, b: P, n = 20) => Array.from({ length: n + 1 }, (_, i) => new THREE.Vector3(a[0] + (b[0] - a[0]) * (i / n), a[1] + (b[1] - a[1]) * (i / n), top));
 
   // Hem stitch, inset from the outline along the bottom edge.
@@ -79,7 +81,7 @@ export function buildGarment(style: GarmentStyle, f: GarmentFinishes): THREE.Gro
   for (const side of [-1, 1]) stitch(line([side * 0.13, 0.49], [side * 0.3, 0.455]), "stitch_shoulder");
 
   if (style === "jacket") {
-    const trim = makeMaterial(f.trim ?? f.body);
+    const trim = M(["trim", "body"]);
     // Collar lapels: two soft triangles lying on the chest
     for (const side of [-1, 1]) {
       const lapel = sampleClosed([[side * 0.01, 0.42], [side * 0.14, 0.5], [side * 0.15, 0.44], [side * 0.1, 0.3], [side * 0.025, 0.14]], 80);
@@ -100,7 +102,7 @@ export function buildGarment(style: GarmentStyle, f: GarmentFinishes): THREE.Gro
     // Chest pockets with flaps
     for (const side of [-1, 1]) {
       const pocket = sampleClosed([[side * 0.1, 0.08], [side * 0.26, 0.08], [side * 0.26, -0.12], [side * 0.1, -0.12]], 60);
-      const m = named(new THREE.Mesh(pillow(pocket, 0.016, 0.006), makeMaterial(f.body)), "pocket");
+      const m = named(new THREE.Mesh(pillow(pocket, 0.016, 0.006), M(["body"])), "pocket");
       m.position.z = top - 0.002;
       group.add(m);
       const flap = sampleClosed([[side * 0.095, 0.1], [side * 0.265, 0.1], [side * 0.265, 0.035], [side * 0.18, 0.02], [side * 0.095, 0.035]], 60);
@@ -115,7 +117,7 @@ export function buildGarment(style: GarmentStyle, f: GarmentFinishes): THREE.Gro
       const a = Math.PI * (i / 40);
       return new THREE.Vector3(Math.cos(a) * 0.125, 0.5 - Math.sin(a) * 0.055 - 0.005, top - 0.008);
     });
-    group.add(named(new THREE.Mesh(openTube(neck, 0.014), makeMaterial(f.trim ?? f.body)), "collar"));
+    group.add(named(new THREE.Mesh(openTube(neck, 0.014), M(["trim", "body"])), "collar"));
     group.add(named(new THREE.Mesh(openTube(neck.map((p) => p.clone().add(new THREE.Vector3(0, -0.022, 0.004))), 0.0026), thread), "stitch_collar"));
   }
 

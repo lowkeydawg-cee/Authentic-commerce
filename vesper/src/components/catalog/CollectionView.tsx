@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Suspense } from "react";
 import { Reveal } from "@/components/home/Reveal";
 import { commerce, type ColorFamily, type ProductQuery, type SortKey } from "@/lib/commerce";
 import { FilterBar } from "./FilterBar";
@@ -36,22 +35,26 @@ export async function CollectionView({ eyebrow, title, intro, base, searchParams
   return (
     <>
       <header className="page-x mx-auto max-w-page pb-14 pt-[calc(var(--header-h)+72px)] lg:pb-20">
-        <Reveal>
+        <Reveal eager>
           <p className="label text-smoke">{eyebrow}</p>
           <h1 className="mt-4 font-display text-[clamp(52px,7vw,112px)] leading-[0.95]">{title}</h1>
           <p className="mt-6 max-w-xl text-[17px] font-light leading-relaxed text-mist">{intro}</p>
         </Reveal>
       </header>
 
-      <Suspense>
-        <FilterBar count={products.length} availableColors={availableColors} availableSizes={availableSizes} />
-      </Suspense>
+      <FilterBar
+        current={{ colour: colors, size: sizes, sort }}
+        count={products.length}
+        availableColors={availableColors}
+        availableSizes={availableSizes}
+      />
 
       <section
         id="product-grid"
         aria-label={`${title}: ${products.length} products`}
         className="page-x mx-auto max-w-page py-14 transition-opacity duration-quick data-[pending]:opacity-50 lg:py-20"
       >
+        <h2 className="sr-only">Products</h2>
         {products.length === 0 ? (
           <div className="flex flex-col items-start gap-5 py-24">
             <p className="font-display text-4xl">Nothing in that combination.</p>
@@ -64,7 +67,7 @@ export async function CollectionView({ eyebrow, title, intro, base, searchParams
           <ul className="grid gap-x-6 gap-y-16 sm:grid-cols-2 xl:grid-cols-3">
             {products.map((p, i) => (
               <WithInterlude key={p.slug} index={i} total={products.length}>
-                <Reveal as="li" delay={(i % 3) * 80}>
+                <Reveal as="li" delay={(i % 3) * 80} eager={i < 3}>
                   <ProductCard product={p} preferFamilies={colors} priority={i < 3} />
                 </Reveal>
               </WithInterlude>

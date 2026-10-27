@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
-import { makeMaterial, type Finish } from "./materials";
+import { finishMaterial, type Finish, type FinishSet } from "./materials";
 import { closedTube, offsetOutline, openTube, sampleClosed, shapeFrom, smoothstep } from "./shapes";
 
 /**
@@ -94,6 +94,7 @@ export function buildFootwear(style: FootwearStyle, f: FootwearFinishes): THREE.
   const s = STYLES[style];
   const group = new THREE.Group();
   group.name = `standin_footwear_${style}`;
+  const M = (chain: string[], shade = 0, fallbackShade = 0) => finishMaterial(f as unknown as FinishSet, chain, shade, fallbackShade);
   const lift = (x: number) => s.spring * smoothstep(0.55, 1, x + 0.5) ** 2;
   const springGeo = (input: THREE.BufferGeometry) => {
     // Weld the extrusion's split vertices so lighting is smooth, not faceted.
@@ -109,19 +110,19 @@ export function buildFootwear(style: FootwearStyle, f: FootwearFinishes): THREE.
   let soleTop = 0;
   if (s.outsoleH > 0) {
     const out = springGeo(extrudeUp(OUTLINE, s.outsoleH - 0.012, 0.006, 0.006, 3));
-    group.add(named(new THREE.Mesh(out, makeMaterial(f.sole)), "outsole"));
+    group.add(named(new THREE.Mesh(out, M(["sole"])), "outsole"));
     soleTop = s.outsoleH;
   }
   const midH = s.soleH - soleTop;
   const sole = extrudeUp(OUTLINE, midH - 0.02, 0.01, 0.01, 4);
   sole.translate(0, soleTop, 0);
-  group.add(named(new THREE.Mesh(springGeo(sole), makeMaterial(f.midsole ?? f.sole)), "sole"));
+  group.add(named(new THREE.Mesh(springGeo(sole), M(["midsole", "sole"])), "sole"));
   soleTop = s.soleH;
 
   if (s.heelBlock) {
     const block = new RoundedBoxGeometry(0.2, 0.035, 0.26, 3, 0.01);
     block.translate(-0.39, -0.012, 0);
-    group.add(named(new THREE.Mesh(block, makeMaterial(f.sole)), "heel_block"));
+    group.add(named(new THREE.Mesh(block, M(["sole"])), "heel_block"));
     group.position.y = 0.03;
   }
 
@@ -136,7 +137,7 @@ export function buildFootwear(style: FootwearStyle, f: FootwearFinishes): THREE.
     const t = THREE.MathUtils.clamp(x + 0.5, 0, 1);
     pos.setXYZ(i, x, soleTop - 0.012 + y * s.profile(t), z * (1 - s.taper * rel * rel));
   }
-  const upperMesh = named(new THREE.Mesh(springGeo(upper), makeMaterial(f.upper)), "upper");
+  const upperMesh = named(new THREE.Mesh(springGeo(upper), M(["upper"])), "upper");
   group.add(upperMesh);
 
   /**
@@ -152,8 +153,8 @@ export function buildFootwear(style: FootwearStyle, f: FootwearFinishes): THREE.
     if (!hit || !hit.face) return origin;
     return hit.point.clone().add(hit.face.normal.clone().multiplyScalar(offset));
   };
-  const seam = (pts: THREE.Vector3[], name: string, radius = 0.0032, finish = f.thread) =>
-    group.add(named(new THREE.Mesh(openTube(pts, radius), makeMaterial(finish)), name));
+  const seam = (pts: THREE.Vector3[], name: string, radius = 0.0032, chain = ["thread"], shadeAmount = 0) =>
+    group.add(named(new THREE.Mesh(openTube(pts, radius), M(chain, shadeAmount)), name));
   const range = (n: number, fn: (u: number) => THREE.Vector3) => Array.from({ length: n + 1 }, (_, i) => fn(i / n));
 
   const topAt = (x: number) => soleTop - 0.012 + s.upperH * s.profile(THREE.MathUtils.clamp(x + 0.5, 0, 1)) + lift(x);
@@ -162,14 +163,14 @@ export function buildFootwear(style: FootwearStyle, f: FootwearFinishes): THREE.
   // Collar opening (lining) and padded collar rim
   const opening = new THREE.SphereGeometry(1, 48, 24);
   opening.scale(s.collar.sx, 0.04, s.collar.sz);
-  const openingMesh = named(new THREE.Mesh(opening, makeMaterial(f.lining)), "lining");
+  const openingMesh = named(new THREE.Mesh(opening, M(["lining"])), "lining");
   openingMesh.position.set(s.collar.x, topAt(s.collar.x) - 0.022, 0);
   openingMesh.rotation.z = slopeAt(s.collar.x);
   group.add(openingMesh);
   const rim = new THREE.TorusGeometry(1, 0.11, 16, 96);
   rim.rotateX(Math.PI / 2);
   rim.scale(s.collar.sx * 1.04, 0.14, s.collar.sz * 1.08);
-  const rimMesh = named(new THREE.Mesh(rim, makeMaterial(f.upper)), "collar");
+  const rimMesh = named(new THREE.Mesh(rim, M(["upper"])), "collar");
   rimMesh.position.copy(openingMesh.position).add(new THREE.Vector3(0, 0.006, 0));
   rimMesh.rotation.z = openingMesh.rotation.z;
   group.add(rimMesh);
@@ -179,7 +180,7 @@ export function buildFootwear(style: FootwearStyle, f: FootwearFinishes): THREE.
   if (s.tongue) {
     const len = 0.06 + s.laces * 0.048;
     const tongue = new RoundedBoxGeometry(len, 0.02, 0.1, 3, 0.009);
-    const m = named(new THREE.Mesh(tongue, makeMaterial(f.upper)), "tongue");
+    const m = named(new THREE.Mesh(tongue, M(["upper"])), "tongue");
     const cx = laceStart + len / 2 - 0.02;
     m.position.set(cx, topAt(cx) + 0.012, 0);
     m.rotation.z = slopeAt(cx);
@@ -190,7 +191,7 @@ export function buildFootwear(style: FootwearStyle, f: FootwearFinishes): THREE.
   if (s.laces > 0) {
     // Eyestays either side of the lacing, each with a stitch line
     for (const side of [-1, 1]) {
-      seam(range(24, (u) => surf(laceStart - 0.02 + u * (laceEnd - laceStart + 0.06), Math.PI / 2 + side * 0.42, 0.006)), "eyestay", 0.011, { ...f.upper, color: shade(f.upper.color, -0.04) });
+      seam(range(24, (u) => surf(laceStart - 0.02 + u * (laceEnd - laceStart + 0.06), Math.PI / 2 + side * 0.42, 0.006)), "eyestay", 0.011, ["upper"], -0.04);
       seam(range(24, (u) => surf(laceStart - 0.02 + u * (laceEnd - laceStart + 0.06), Math.PI / 2 + side * 0.56)), "stitch_eyestay");
     }
     for (let i = 0; i < s.laces; i++) {
@@ -199,7 +200,7 @@ export function buildFootwear(style: FootwearStyle, f: FootwearFinishes): THREE.
       const a = surf(x - skew, Math.PI / 2 - 0.4, 0.016);
       const b = surf(x + skew, Math.PI / 2 + 0.4, 0.016);
       const mid = a.clone().add(b).multiplyScalar(0.5).add(new THREE.Vector3(0, 0.012, 0));
-      seam([a, mid, b], "laces", 0.0078, f.laces ?? f.thread);
+      seam([a, mid, b], "laces", 0.0078, ["laces", "thread"]);
     }
   }
 
@@ -220,9 +221,9 @@ export function buildFootwear(style: FootwearStyle, f: FootwearFinishes): THREE.
       const a = (i / 96) * Math.PI * 2;
       return surf(0.24 + Math.cos(a) * 0.15, Math.PI / 2 + Math.sin(a) * 0.62);
     });
-    group.add(named(new THREE.Mesh(closedTube(pts, 0.0035), makeMaterial(f.thread)), "stitch_apron"));
+    group.add(named(new THREE.Mesh(closedTube(pts, 0.0035), M(["thread"])), "stitch_apron"));
     const strap = new RoundedBoxGeometry(0.05, 0.012, 0.25, 3, 0.005);
-    const m = named(new THREE.Mesh(strap, makeMaterial(f.upper)), "penny_strap");
+    const m = named(new THREE.Mesh(strap, M(["upper"])), "penny_strap");
     m.position.set(0.06, topAt(0.06) + 0.004, 0);
     m.rotation.z = slopeAt(0.06);
     group.add(m);
@@ -230,14 +231,14 @@ export function buildFootwear(style: FootwearStyle, f: FootwearFinishes): THREE.
 
   // Stitch lines: welt on the sole edge and the upper's base seam
   const weltY = soleTop - (s.soleH - (s.outsoleH || 0)) * 0.45;
-  group.add(named(new THREE.Mesh(closedTube(offsetOutline(OUTLINE, 0.011).map((p) => new THREE.Vector3(p.x, weltY + lift(p.x), -p.y)), 0.0032), makeMaterial(f.thread)), "stitch_welt"));
+  group.add(named(new THREE.Mesh(closedTube(offsetOutline(OUTLINE, 0.011).map((p) => new THREE.Vector3(p.x, weltY + lift(p.x), -p.y)), 0.0032), M(["thread"])), "stitch_welt"));
   const seamY = soleTop + 0.022;
-  group.add(named(new THREE.Mesh(closedTube(offsetOutline(upperPts, 0.026).map((p) => new THREE.Vector3(p.x, seamY + lift(p.x), -p.y)), 0.003), makeMaterial(f.thread)), "stitch_upper"));
+  group.add(named(new THREE.Mesh(closedTube(offsetOutline(upperPts, 0.026).map((p) => new THREE.Vector3(p.x, seamY + lift(p.x), -p.y)), 0.003), M(["thread"])), "stitch_upper"));
 
   // Heel tab
   const tabH = Math.min(0.1, s.upperH * 0.65);
   const tab = new RoundedBoxGeometry(0.02, tabH, 0.07, 3, 0.008);
-  const tabMesh = named(new THREE.Mesh(tab, makeMaterial(f.logo ?? f.upper)), "heel_tab");
+  const tabMesh = named(new THREE.Mesh(tab, M(["logo", "upper"])), "heel_tab");
   tabMesh.position.set(-0.505, soleTop + s.upperH * 0.55, 0);
   group.add(tabMesh);
 
@@ -248,11 +249,14 @@ export function buildFootwear(style: FootwearStyle, f: FootwearFinishes): THREE.
   const vGeo = new THREE.ExtrudeGeometry(v, { depth: 0.002, bevelEnabled: false });
   vGeo.scale(0.7, 0.7, 1);
   const logoX = -0.3;
-  const vMesh = named(new THREE.Mesh(vGeo, makeMaterial(f.logo ?? { ...f.upper, color: shade(f.upper.color, -0.05) })), "logo");
+  const vMesh = named(new THREE.Mesh(vGeo, M(["logo", "upper"], 0, -0.05)), "logo");
   const logoTheta = 0.32;
   vMesh.position.copy(surf(logoX, logoTheta, 0.001));
   vMesh.lookAt(vMesh.position.clone().add(new THREE.Vector3(0, Math.sin(logoTheta), Math.cos(logoTheta))));
   group.add(vMesh);
+
+  // The upper was double-sided only so the surface raycasts above could hit it from inside.
+  upperMesh.material.side = THREE.FrontSide;
 
   // Hotspot anchors (named empties, like the production GLB)
   const anchors: [string, THREE.Vector3][] = [
@@ -282,8 +286,3 @@ function named<T extends THREE.Object3D>(o: T, name: string): T {
   return o;
 }
 
-function shade(hex: string, amount: number) {
-  const c = new THREE.Color(hex);
-  c.offsetHSL(0, 0, amount);
-  return `#${c.getHexString()}`;
-}

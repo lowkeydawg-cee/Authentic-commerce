@@ -27,12 +27,13 @@ export function ProductCard({ product, preferFamilies, priority }: Props) {
             priority={priority}
             className="absolute inset-0 transition-transform duration-standard ease-glide group-hover:scale-[1.03]"
           />
-          {/* Second angle crossfades in on hover (Step 7 · hover states) */}
+          {/* Second angle crossfades in on hover (Step 7 · hover states). display:none on
+              touch screens, so the lazy image is never downloaded there. */}
           <ProductImage
             src={lead.images.alt}
             alt=""
             sizes="(min-width: 1280px) 30vw, (min-width: 640px) 45vw, 90vw"
-            className="absolute inset-0 opacity-0 transition-opacity duration-standard ease-glide group-hover:opacity-100 motion-reduce:hidden"
+            className="absolute inset-0 hidden opacity-0 transition-opacity duration-standard ease-glide group-hover:opacity-100 motion-reduce:!hidden [@media(hover:hover)]:block"
           />
           <div className="absolute left-4 top-4 flex gap-2">
             {product.tags.includes("new") && <span className="label bg-ink/70 px-2.5 py-1 text-ivory backdrop-blur-sm">New</span>}

@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Component, useEffect, useMemo, useRef } from "react";
+import { Component, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { createStudio, frameObject } from "@/three/studio";
 import { buildStandin, type StandinSpec } from "@/three/standins";
@@ -76,9 +76,19 @@ export default function HomeStage3D(props: Props) {
 }
 
 function StageScene({ spec, keyframes, driver, onReady, labelRefs }: Props & { labelRefs: React.MutableRefObject<(HTMLDivElement | null)[]> }) {
-  const { camera, invalidate, size } = useThree();
+  const { camera, gl, scene, invalidate, size } = useThree();
   const cam = camera as THREE.PerspectiveCamera;
   const model = useMemo(() => buildStandin(spec), [spec]);
+  // Compile shaders in the background before the model is shown (see ProductViewer).
+  const [compiled, setCompiled] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    const done = () => !cancelled && (setCompiled(true), invalidate());
+    gl.compileAsync(model, camera, scene).then(done, done);
+    return () => {
+      cancelled = true;
+    };
+  }, [gl, model, camera, scene, invalidate]);
   const shots = useRef<{ pos: THREE.Vector3; target: THREE.Vector3 }[] | null>(null);
   const ready = useRef(false);
   const tmp = useMemo(() => ({ s: new THREE.Spherical(), v: new THREE.Vector3(), t: new THREE.Vector3(), p: new THREE.Vector3() }), []);
@@ -110,7 +120,7 @@ function StageScene({ spec, keyframes, driver, onReady, labelRefs }: Props & { l
 
   useFrame(() => {
     const s = shots.current;
-    if (!s) return;
+    if (!s || !compiled) return;
     const p = THREE.MathUtils.clamp(driver.current.progress, 0, s.length - 1);
     const i = Math.min(Math.floor(p), s.length - 2);
     const f = ease(p - i);
@@ -138,7 +148,7 @@ function StageScene({ spec, keyframes, driver, onReady, labelRefs }: Props & { l
     }
   });
 
-  return <primitive object={model} />;
+  return compiled ? <primitive object={model} /> : null;
 }
 
 class StageErrorBoundary extends Component<{ onError: () => void; children: React.ReactNode }, { failed: boolean }> {

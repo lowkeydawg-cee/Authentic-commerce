@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { Reveal } from "@/components/home/Reveal";
-import { ProductExperience, ProductExperienceWithUrl } from "@/components/product/ProductExperience";
+import { ProductExperience } from "@/components/product/ProductExperience";
 import { ViewIn3D } from "@/components/product/ViewIn3D";
 import { commerce } from "@/lib/commerce";
 
@@ -24,8 +23,14 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   };
 }
 
-export default async function ProductPage({ params }: { params: Params }) {
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+export default async function ProductPage({ params, searchParams }: { params: Params; searchParams: SearchParams }) {
   const { slug } = await params;
+  // Read ?colour= on the server so the first HTML already shows the right
+  // colourway (no client re-render of the gallery, fast LCP).
+  const rawColour = (await searchParams).colour;
+  const colour = Array.isArray(rawColour) ? rawColour[0] : rawColour;
   const product = await commerce.getProduct(slug);
   if (!product) notFound();
 
@@ -66,9 +71,7 @@ export default async function ProductPage({ params }: { params: Params }) {
       </nav>
 
       <div className="page-x mx-auto max-w-page pb-24">
-        <Suspense fallback={<ProductExperience product={product} />}>
-          <ProductExperienceWithUrl product={product} />
-        </Suspense>
+        <ProductExperience product={product} initialColour={colour} />
       </div>
 
       <section aria-labelledby="made-title" className="border-t border-line">
