@@ -10,7 +10,7 @@ export function CategoryTiles() {
         <h2 id="categories-title" className="font-display text-[clamp(40px,4.6vw,72px)] leading-none">
           Shop by category
         </h2>
-        <Link href="/collections" className="label link-draw text-mist hover:text-ivory">
+        <Link href="/collections" className="label link-draw tap text-mist hover:text-ivory">
           View everything
         </Link>
       </Reveal>

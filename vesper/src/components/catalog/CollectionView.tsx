@@ -56,7 +56,7 @@ export async function CollectionView({ eyebrow, title, intro, base, searchParams
           <div className="flex flex-col items-start gap-5 py-24">
             <p className="font-display text-4xl">Nothing in that combination.</p>
             <p className="text-mist">Try another colour or size, or clear the filters.</p>
-            <Link href="?" scroll={false} className="label link-draw">
+            <Link href="?" scroll={false} className="label link-draw tap">
               Clear filters
             </Link>
           </div>
@@ -92,7 +92,7 @@ function WithInterlude({ index, total, children }: { index: number; total: numbe
                 Stitched soles can be resoled, waxed cotton re‑proofed and calf re‑conditioned. Turn any piece in 3D to see how
                 it is made.
               </p>
-              <Link href="/journal" className="label link-draw">
+              <Link href="/journal" className="label link-draw tap">
                 Inside the atelier
               </Link>
             </div>

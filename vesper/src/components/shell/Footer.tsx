@@ -9,7 +9,7 @@ function Column({ title, links }: { title: string; links: NavLink[] }) {
       <ul className="space-y-1">
         {links.map((l) => (
           <li key={l.href}>
-            <Link href={l.href} className="link-draw inline-flex min-h-11 items-center text-[15px] text-mist hover:text-ivory">
+            <Link href={l.href} className="link-draw tap text-[15px] text-mist hover:text-ivory">
               {l.label}
             </Link>
           </li>

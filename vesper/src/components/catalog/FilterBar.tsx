@@ -142,7 +142,7 @@ export function FilterBar({ count, availableColors, availableSizes }: Props) {
             {pending ? "Updating…" : `${count} ${count === 1 ? "piece" : "pieces"}`}
           </p>
           {activeCount > 0 && (
-            <button type="button" onClick={clear} className="label link-draw hidden text-mist hover:text-ivory lg:inline">
+            <button type="button" onClick={clear} className="label link-draw tap hidden text-mist hover:text-ivory lg:inline-flex">
               Clear
             </button>
           )}

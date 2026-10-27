@@ -127,7 +127,7 @@ export function CheckoutFlow() {
     return (
       <div className="page-x mx-auto flex min-h-[70svh] max-w-page flex-col items-start justify-center gap-5 pt-[var(--header-h)]">
         <h1 className="font-display text-5xl">Your bag is empty.</h1>
-        <Link href="/collections" className="label link-draw">
+        <Link href="/collections" className="label link-draw tap">
           Discover the collection
         </Link>
       </div>
@@ -186,7 +186,7 @@ export function CheckoutFlow() {
   );
 
   const backButton = (
-    <button type="button" onClick={() => setStep((s) => s - 1)} className="label link-draw min-h-12 text-mist hover:text-ivory">
+    <button type="button" onClick={() => setStep((s) => s - 1)} className="label link-draw tap text-mist hover:text-ivory">
       ← Back
     </button>
   );

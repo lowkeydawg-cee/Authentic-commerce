@@ -57,7 +57,7 @@ export function BagLines({ lines, compact, readOnly, onNavigate }: { lines: Reso
                       +
                     </button>
                   </div>
-                  <button type="button" onClick={() => bag.setQuantity(index, 0)} className="label link-draw min-h-11 text-smoke hover:text-ivory">
+                  <button type="button" onClick={() => bag.setQuantity(index, 0)} className="label link-draw tap text-smoke hover:text-ivory">
                     Remove <span className="sr-only">{product.title}</span>
                   </button>
                 </div>

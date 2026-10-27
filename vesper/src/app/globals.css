@@ -43,6 +43,17 @@
   .link-draw[aria-current="page"] {
     background-size: 100% 1px;
   }
+  /* Standalone text links/buttons get a 44px touch target (WCAG 2.5.8 and
+     beyond); the underline stays tucked under the text, not the box. */
+  .tap {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  .tap.link-draw {
+    padding-bottom: 0;
+    background-position: 0 calc(50% + 0.85em);
+  }
 }
 
 /* Step 7 · page load: the stage lights up, headline lines rise from a mask. */

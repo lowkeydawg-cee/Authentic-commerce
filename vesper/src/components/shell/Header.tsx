@@ -144,9 +144,9 @@ export function Header() {
 
           {/* Right: utilities */}
           <div className="flex items-center justify-end gap-1 sm:gap-6">
-            <Link href="/search" className="label hidden h-11 items-center gap-2 sm:flex">
+            <Link href="/search" aria-label="Search" className="label hidden h-11 min-w-11 items-center justify-center gap-2 sm:flex">
               <SearchIcon className="h-[18px] w-[18px]" />
-              <span className="hidden xl:inline">Search</span>
+              <span className="hidden xl:inline" aria-hidden="true">Search</span>
             </Link>
             <Link href="/account" className="label link-draw hidden pt-1 lg:inline">
               Account

@@ -58,10 +58,10 @@ export default async function ProductPage({ params }: { params: Params }) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <nav aria-label="Breadcrumb" className="page-x mx-auto max-w-page pb-6 pt-[calc(var(--header-h)+24px)]">
-        <ol className="label flex flex-wrap gap-2 text-smoke">
-          <li><Link href="/collections" className="hover:text-ivory">Collection</Link> /</li>
-          <li><Link href={`/collections/${category.slug}`} className="hover:text-ivory">{category.title}</Link> /</li>
-          <li aria-current="page" className="text-mist">{product.title}</li>
+        <ol className="label flex flex-wrap items-center gap-x-2 text-smoke">
+          <li><Link href="/collections" className="tap hover:text-ivory">Collection</Link> /</li>
+          <li><Link href={`/collections/${category.slug}`} className="tap hover:text-ivory">{category.title}</Link> /</li>
+          <li aria-current="page" className="inline-flex min-h-11 items-center text-mist">{product.title}</li>
         </ol>
       </nav>
 

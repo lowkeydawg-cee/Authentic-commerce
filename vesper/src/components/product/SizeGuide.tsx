@@ -8,7 +8,7 @@ export function SizeGuide({ kind }: { kind: "footwear" | "apparel" }) {
   const table = kind === "footwear" ? FOOTWEAR_SIZES : APPAREL_SIZES;
   return (
     <>
-      <button type="button" onClick={() => ref.current?.showModal()} className="label link-draw text-mist hover:text-ivory">
+      <button type="button" onClick={() => ref.current?.showModal()} className="label link-draw tap text-mist hover:text-ivory">
         Size guide
       </button>
       <dialog

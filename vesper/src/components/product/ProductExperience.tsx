@@ -154,7 +154,7 @@ export function ProductExperience({ product, initialColour }: { product: Product
     <div className="grid gap-y-10 lg:grid-cols-[minmax(0,1.5fr)_minmax(380px,1fr)]">
       {/* ── Gallery / 3D viewer ──────────────────────────── */}
       <section ref={galleryRef} aria-label={`${product.title} images and 3D view`} className="min-w-0 scroll-mt-[calc(var(--header-h)+16px)]">
-        <div className="relative aspect-[4/5] sm:aspect-[5/4] lg:aspect-auto lg:h-[calc(100svh-var(--header-h)-120px)] lg:min-h-[560px]">
+        <div className="relative aspect-[4/5] max-h-[calc(100svh-var(--header-h)-16px)] w-full sm:aspect-[5/4] lg:aspect-auto lg:h-[calc(100svh-var(--header-h)-120px)] lg:max-h-none lg:min-h-[560px]">
           {view === "3d" && capability ? (
             <>
               {/* Poster stays until the model's first frame, then crossfades out. */}
@@ -344,7 +344,7 @@ export function ProductExperience({ product, initialColour }: { product: Product
                   Added: {product.title} · {colourway.name}
                   {oneSize ? "" : ` · ${size}`}
                 </span>
-                <Link href="/bag" className="label link-draw">
+                <Link href="/bag" className="label link-draw tap">
                   View bag
                 </Link>
               </p>

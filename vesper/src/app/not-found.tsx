@@ -8,7 +8,7 @@ export default function NotFound() {
         Lost <em className="text-bronze">after dark.</em>
       </h1>
       <p className="max-w-md text-mist">This page doesn&apos;t exist yet, or has moved. The collection is this way.</p>
-      <Link href="/" className="label link-draw self-start">
+      <Link href="/" className="label link-draw tap self-start">
         Return home
       </Link>
     </section>

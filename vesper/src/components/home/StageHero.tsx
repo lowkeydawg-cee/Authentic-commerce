@@ -34,7 +34,7 @@ export function StageHero() {
           >
             {hero.cta.label}
           </Link>
-          <Link href={hero.product.href} className="link-draw text-[15px] text-mist hover:text-ivory">
+          <Link href={hero.product.href} className="link-draw tap text-[15px] text-mist hover:text-ivory">
             {hero.product.name} — explore in 3D
           </Link>
         </div>

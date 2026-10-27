@@ -95,7 +95,9 @@ export default function ProductViewer(props: ProductViewerProps) {
       aria-label={`${label}. Drag or use the arrow keys to rotate, plus and minus to zoom, R to reset.`}
       onKeyDown={onKeyDown}
       onPointerDown={() => setTouched(true)}
-      className="absolute inset-0 cursor-grab touch-none bg-[radial-gradient(ellipse_60%_55%_at_50%_45%,#3A3430_0%,#171514_58%,#0E0D0E_100%)] outline-none focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-4 focus-visible:outline-ivory active:cursor-grabbing"
+      // Touch: vertical swipes keep scrolling the page; sideways drags rotate, pinch zooms.
+      style={{ touchAction: props.mobile ? "pan-y" : "none" }}
+      className="absolute inset-0 cursor-grab bg-[radial-gradient(ellipse_60%_55%_at_50%_45%,#3A3430_0%,#171514_58%,#0E0D0E_100%)] outline-none focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-4 focus-visible:outline-ivory active:cursor-grabbing"
     >
       <ViewerErrorBoundary onError={onError}>
         <Canvas
@@ -162,7 +164,7 @@ export default function ProductViewer(props: ProductViewerProps) {
             touched && "opacity-0",
           )}
         >
-          Drag to rotate · Scroll or pinch to zoom
+          {props.mobile ? "Swipe sideways to rotate · Pinch to zoom" : "Drag to rotate · Scroll or pinch to zoom"}
         </p>
       )}
 
@@ -234,8 +236,10 @@ function Scene({ spec, angle, hotspots, activeId, reducedMotion, mobile, onReady
     c.zoomSpeed = 0.6;
     c.minPolarAngle = MIN_POLAR;
     c.maxPolarAngle = MAX_POLAR;
+    // OrbitControls sets touch-action: none; on phones let vertical swipes scroll the page.
+    if (mobile) gl.domElement.style.touchAction = "pan-y";
     return c;
-  }, [cam, gl]);
+  }, [cam, gl, mobile]);
 
   const onInteractRef = useRef(onInteract);
   onInteractRef.current = onInteract;

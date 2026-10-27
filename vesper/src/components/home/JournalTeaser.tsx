@@ -16,7 +16,7 @@ export function JournalTeaser() {
         </Reveal>
         <Reveal delay={120} className="flex flex-col gap-6">
           <p className="text-base font-light leading-relaxed text-mist">{journal.body}</p>
-          <Link href={journal.link.href} className="label link-draw self-start">
+          <Link href={journal.link.href} className="label link-draw tap self-start">
             {journal.link.label}
           </Link>
         </Reveal>

@@ -96,7 +96,7 @@ export function BagDrawer() {
         {lines.length === 0 ? (
           <div className="page-x flex flex-1 flex-col items-start justify-center gap-5 sm:px-8">
             <p className="font-display text-3xl">Your bag is empty.</p>
-            <Link href="/collections" className="label link-draw">
+            <Link href="/collections" className="label link-draw tap">
               Discover the collection
             </Link>
           </div>

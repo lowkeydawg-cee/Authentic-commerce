@@ -52,9 +52,9 @@ export function CollectionMenu({ open, onNavigate, onMouseEnter }: Props) {
         <div>
           <p className="label mb-6 text-smoke">Edits</p>
           <ul className="space-y-4 text-[15px] text-mist">
-            <li><Link href="/collections" onClick={onNavigate} className="link-draw hover:text-ivory">View everything</Link></li>
-            <li><Link href="/collections/the-nocturne" onClick={onNavigate} className="link-draw hover:text-ivory">The Nocturne</Link></li>
-            <li><Link href="/collections/new" onClick={onNavigate} className="link-draw hover:text-ivory">New arrivals</Link></li>
+            <li><Link href="/collections" onClick={onNavigate} className="link-draw tap hover:text-ivory">View everything</Link></li>
+            <li><Link href="/collections/the-nocturne" onClick={onNavigate} className="link-draw tap hover:text-ivory">The Nocturne</Link></li>
+            <li><Link href="/collections/new" onClick={onNavigate} className="link-draw tap hover:text-ivory">New arrivals</Link></li>
           </ul>
         </div>
         <Link
