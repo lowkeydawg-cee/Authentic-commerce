@@ -31,7 +31,7 @@ export function Kpis({ snapshot }: { snapshot: InventorySnapshot }) {
   return (
     <dl className="mt-10 grid grid-cols-2 gap-px border border-line bg-line sm:grid-cols-3 lg:grid-cols-5">
       {cards.map((c) => (
-        <div key={c.label} className="bg-ink p-5 last:col-span-2 sm:last:col-span-1">
+        <div key={c.label} className="bg-ink p-5 last:col-span-2 lg:last:col-span-1">
           <dt className="label text-smoke">{c.label}</dt>
           {/* Re-keyed on change so the new figure fades in. */}
           <dd key={c.value} className={`anim-fade-quick mt-3 font-display sm:whitespace-nowrap text-[clamp(22px,2vw,30px)] tabular-nums ${c.tone ?? ""}`}>
