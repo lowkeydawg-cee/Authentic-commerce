@@ -6,16 +6,20 @@ import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
 import { BAG_OPEN_EVENT } from "@/lib/cart/events";
 import { resolveLines, subtotal } from "@/lib/cart/resolve";
+import { useBagStockGuard } from "@/lib/cart/stock-guard";
 import { useBag } from "@/lib/cart/store";
 import { formatMoney } from "@/lib/format";
 import { fadeStyle } from "@/motion/fade";
 import { BagLines } from "./BagLines";
+import { BagNotice } from "./BagNotice";
 
 /**
  * Mini-bag (Step 7 · add-to-bag confirmation): slides in from the right,
  * closes itself 4 s after an add unless the shopper hovers or focuses it.
  */
 export function BagDrawer() {
+  // Mounted on every page, so it also keeps the bag in line with live stock.
+  useBagStockGuard();
   const lines = resolveLines(useBag());
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -93,6 +97,7 @@ export function BagDrawer() {
             Close
           </button>
         </div>
+        <BagNotice className="page-x empty:hidden pt-4 sm:px-8" />
         {lines.length === 0 ? (
           <div className="page-x flex flex-1 flex-col items-start justify-center gap-5 sm:px-8">
             <p className="font-display text-3xl">Your bag is empty.</p>

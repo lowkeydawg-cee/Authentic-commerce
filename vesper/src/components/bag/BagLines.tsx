@@ -4,16 +4,20 @@ import Link from "next/link";
 import clsx from "clsx";
 import { ProductImage } from "@/components/media/ProductImage";
 import { bag } from "@/lib/cart/store";
+import { useStock } from "@/lib/inventory/live";
+import { skuOf } from "@/lib/inventory/types";
 import type { ResolvedLine } from "@/lib/cart/resolve";
 import { formatMoney } from "@/lib/format";
 
 const MAX_QTY = 10;
 
 export function BagLines({ lines, compact, readOnly, onNavigate }: { lines: ResolvedLine[]; compact?: boolean; readOnly?: boolean; onNavigate?: () => void }) {
+  const stock = useStock();
   return (
     <ul className="divide-y divide-line border-y border-line">
       {lines.map(({ index, line, product, colorway, lineTotal }) => {
         const href = `/products/${product.slug}?colour=${colorway.id}`;
+        const onHand = stock.onHand(skuOf(line.slug, line.colorwayId, line.size));
         const sizeText = product.sizeLabel === "One size" ? "One size" : `${product.sizeLabel === "EU" ? "EU " : "Size "}${line.size}`;
         return (
           <li key={`${line.slug}-${line.colorwayId}-${line.size}`} className={clsx("flex gap-4", compact ? "py-4" : "py-6 sm:gap-6")}>
@@ -50,14 +54,17 @@ export function BagLines({ lines, compact, readOnly, onNavigate }: { lines: Reso
                     <button
                       type="button"
                       aria-label={`Increase quantity of ${product.title}`}
-                      disabled={line.quantity >= MAX_QTY}
+                      disabled={line.quantity >= Math.min(MAX_QTY, onHand)}
                       onClick={() => bag.setQuantity(index, line.quantity + 1)}
                       className="grid h-11 w-11 place-items-center text-lg text-mist hover:text-ivory disabled:opacity-30"
                     >
                       +
                     </button>
                   </div>
-                  <button type="button" onClick={() => bag.setQuantity(index, 0)} className="label link-draw tap text-smoke hover:text-ivory">
+                  {stock.status(skuOf(line.slug, line.colorwayId, line.size)) === "low" && (
+                    <span className="text-sm text-bronze">Only {onHand} left</span>
+                  )}
+                  <button type="button" onClick={() => bag.setQuantity(index, 0)} className="label link-draw tap ml-auto text-smoke hover:text-ivory">
                     Remove <span className="sr-only">{product.title}</span>
                   </button>
                 </div>

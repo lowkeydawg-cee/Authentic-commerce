@@ -40,6 +40,7 @@ export interface Colorway {
   images: { front: string; alt: string };
   /** Material finishes for the 3D model (stand-in today, GLB material variants later). */
   finishes: Extract<StandinSpec, { kind: string }>["finishes"];
+  /** Opening demo stock only: these sizes start at 0. Live stock lives in lib/inventory. */
   soldOutSizes: string[];
 }
 

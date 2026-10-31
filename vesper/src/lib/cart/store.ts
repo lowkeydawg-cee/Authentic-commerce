@@ -70,6 +70,10 @@ export const bag = {
   clear() {
     commit([]);
   },
+  /** Replace every line at once (used when live stock forces a correction). */
+  replace(next: BagLine[]) {
+    commit(next);
+  },
 };
 
 const EMPTY: BagLine[] = [];

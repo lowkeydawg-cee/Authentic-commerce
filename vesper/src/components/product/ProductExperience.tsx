@@ -8,7 +8,11 @@ import { ProductImage } from "@/components/media/ProductImage";
 import { openBag } from "@/lib/cart/events";
 import { bag } from "@/lib/cart/store";
 import type { Product } from "@/lib/commerce/types";
+import { RETURNS } from "@/lib/delivery";
 import { formatMoney } from "@/lib/format";
+import { useStock } from "@/lib/inventory/live";
+import { skuOf } from "@/lib/inventory/types";
+import { useBag } from "@/lib/cart/store";
 import { detectCapability, probeWebGL, type Capability } from "@/components/viewer/capability";
 import type { StandinSpec } from "@/three/standins";
 import { whenIdle } from "@/components/viewer/idle";
@@ -30,7 +34,7 @@ export function ProductExperience({ product, initialColour }: { product: Product
   const [interacted, setInteracted] = useState(false);
   const oneSize = product.sizes.length === 1;
   const [size, setSize] = useState<string | null>(oneSize ? product.sizes[0] : null);
-  const [status, setStatus] = useState<"idle" | "needSize" | "added">("idle");
+  const [status, setStatus] = useState<"idle" | "needSize" | "added" | "maxed">("idle");
   const [nudge, setNudge] = useState(0);
   const sizeGroupRef = useRef<HTMLFieldSetElement>(null);
   const buyRef = useRef<HTMLButtonElement>(null);
@@ -46,25 +50,47 @@ export function ProductExperience({ product, initialColour }: { product: Product
   const can3d = capability !== null && capability.tier !== "none" && !viewerFailed;
 
   const colourway = product.colorways.find((c) => c.id === colourId)!;
-  const soldOut = (s: string) => colourway.soldOutSizes.includes(s);
+  // Live stock: sizes sell out and "Only N left" appears the moment the admin or another order changes it.
+  const stock = useStock();
+  const bagLines = useBag();
+  const skuFor = (cw: string, s: string) => skuOf(product.slug, cw, s);
+  const onHand = (s: string, cw = colourway.id) => stock.onHand(skuFor(cw, s));
+  const soldOut = (s: string) => onHand(s) <= 0;
   const allSoldOut = product.sizes.every(soldOut);
+  const colourSoldOut = (cw: string) => product.sizes.every((s) => onHand(s, cw) <= 0);
+  const inBag = (s: string) => bagLines.find((l) => l.slug === product.slug && l.colorwayId === colourway.id && l.size === s)?.quantity ?? 0;
+  const selectedLeft = size ? onHand(size) : 0;
+  const lowNote =
+    size && !soldOut(size) && stock.status(skuFor(colourway.id, size)) === "low"
+      ? `Only ${selectedLeft} left in ${colourway.name}${oneSize ? "" : `, size ${size}`}`
+      : null;
 
   const chooseColour = (next: string) => {
     setInteracted(true);
     setColourId(next);
     setStatus("idle");
     const cw = product.colorways.find((c) => c.id === next)!;
-    if (size && cw.soldOutSizes.includes(size) && !oneSize) setSize(null);
+    if (size && onHand(size, cw.id) <= 0 && !oneSize) setSize(null);
     // Keep the URL shareable without a server round-trip.
     const url = new URL(window.location.href);
     url.searchParams.set("colour", next);
     window.history.replaceState(null, "", url);
   };
 
+  // A selected size that sells out (another shopper, the admin) is released.
+  const selectedGone = !oneSize && !!size && soldOut(size);
+  useEffect(() => {
+    if (selectedGone) setSize(null);
+  }, [selectedGone]);
+
   const addToBag = () => {
     if (!size) {
       setStatus("needSize");
       setNudge((n) => n + 1);
+      return;
+    }
+    if (inBag(size) >= onHand(size)) {
+      setStatus("maxed");
       return;
     }
     bag.add({ slug: product.slug, colorwayId: colourway.id, size });
@@ -284,7 +310,13 @@ export function ProductExperience({ product, initialColour }: { product: Product
                 >
                   <span className="h-[34px] w-[34px] rounded-full border border-white/10" style={{ backgroundColor: c.swatch }} />
                 </span>
-                <span className="sr-only">{c.name}</span>
+                <span className="sr-only">
+                  {c.name}
+                  {colourSoldOut(c.id) && ", sold out"}
+                </span>
+                {colourSoldOut(c.id) && (
+                  <span aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 h-px w-[54px] -translate-x-1/2 -translate-y-1/2 -rotate-45 bg-mist/80" />
+                )}
               </label>
             ))}
           </div>
@@ -325,6 +357,12 @@ export function ProductExperience({ product, initialColour }: { product: Product
                   >
                     {s}
                     {soldOut(s) && <span className="sr-only">, sold out in {colourway.name}</span>}
+                    {!soldOut(s) && stock.status(skuFor(colourway.id, s)) === "low" && (
+                      <>
+                        <span aria-hidden="true" className={clsx("absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full", size === s ? "bg-oxblood" : "bg-bronze")} />
+                        <span className="sr-only">, only {onHand(s)} left</span>
+                      </>
+                    )}
                   </span>
                 </label>
               ))}
@@ -341,10 +379,21 @@ export function ProductExperience({ product, initialColour }: { product: Product
         </p>
 
         <div className="space-y-3">
+          <p aria-live="polite" className="-mb-1 min-h-5 text-sm text-bronze">
+            {lowNote}
+          </p>
           <button ref={buyRef} type="button" onClick={addToBag} disabled={allSoldOut} className={clsx(buyClass, "w-full")}>
             {buyLabel}
           </button>
           <div role="status" className="min-h-6">
+            {status === "maxed" && size && (
+              <p className="anim-fade-quick border border-line bg-night p-4 text-sm">
+                All {onHand(size)} available {onHand(size) === 1 ? "is" : "are"} already in your bag.{" "}
+                <Link href="/bag" className="label link-draw tap">
+                  View bag
+                </Link>
+              </p>
+            )}
             {status === "added" && (
               <p className="anim-fade-quick flex flex-wrap items-center justify-between gap-3 border border-line bg-night p-4 text-sm">
                 <span>
@@ -357,7 +406,7 @@ export function ProductExperience({ product, initialColour }: { product: Product
               </p>
             )}
           </div>
-          <p className="text-sm text-smoke">Complimentary delivery · Free returns within 30 days</p>
+          <p className="text-sm text-smoke">Complimentary delivery · Free returns within {RETURNS.days} days</p>
         </div>
 
         <Accordion
@@ -369,7 +418,7 @@ export function ProductExperience({ product, initialColour }: { product: Product
               title: "Shipping & returns",
               body: (
                 <p>
-                  Complimentary delivery. Free returns and exchanges within 30 days, unworn and in the original packaging.{" "}
+                  Complimentary delivery. Free returns and exchanges within {RETURNS.days} days, unworn and in the original packaging.{" "}
                   <Link href="/shipping-returns" className="link-draw text-ivory">
                     Full policy
                   </Link>

@@ -25,13 +25,10 @@ export const sampleProvider: CommerceProvider = {
       if (query.category && p.category !== query.category) return false;
       if (query.edit && !p.tags.includes(query.edit)) return false;
       if (query.search && !matches(p, query.search)) return false;
-      // Colour and size must match on the same colourway (oxblood in 45, not black in 45).
       const colorways = query.colors?.length ? p.colorways.filter((c) => query.colors!.includes(c.family)) : p.colorways;
       if (colorways.length === 0) return false;
-      if (query.sizes?.length) {
-        const inStock = (size: string) => p.sizes.includes(size) && colorways.some((c) => !c.soldOutSizes.includes(size));
-        if (!query.sizes.some(inStock)) return false;
-      }
+      // Sizes the piece is made in. Live availability is shown on the cards and product page.
+      if (query.sizes?.length && !query.sizes.some((size) => p.sizes.includes(size))) return false;
       return true;
     });
     const by: Record<NonNullable<ProductQuery["sort"]>, (a: Product, b: Product) => number> = {

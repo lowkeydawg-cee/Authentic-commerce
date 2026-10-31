@@ -2,6 +2,8 @@ import Link from "next/link";
 import clsx from "clsx";
 import { ProductImage } from "@/components/media/ProductImage";
 import { formatMoney } from "@/lib/format";
+import { skuOf } from "@/lib/inventory/types";
+import { StockBadge } from "./StockBadge";
 import type { ColorFamily, Product } from "@/lib/commerce";
 
 interface Props {
@@ -13,7 +15,7 @@ interface Props {
 
 export function ProductCard({ product, preferFamilies, priority }: Props) {
   const lead = product.colorways.find((c) => preferFamilies?.includes(c.family)) ?? product.colorways[0];
-  const soldOut = product.colorways.every((c) => product.sizes.every((s) => c.soldOutSizes.includes(s)));
+  const skus = product.colorways.flatMap((c) => product.sizes.map((s) => skuOf(product.slug, c.id, s)));
   const href = `/products/${product.slug}?colour=${lead.id}`;
 
   return (
@@ -37,10 +39,10 @@ export function ProductCard({ product, preferFamilies, priority }: Props) {
           />
           <div className="absolute left-4 top-4 flex gap-2">
             {product.tags.includes("new") && <span className="label bg-ink/70 px-2.5 py-1 text-ivory backdrop-blur-sm">New</span>}
-            {soldOut && <span className="label bg-ink/70 px-2.5 py-1 text-mist backdrop-blur-sm">Sold out</span>}
           </div>
         </div>
       </Link>
+      <StockBadge skus={skus} />
 
       <div className="mt-5 flex items-start justify-between gap-4">
         <div className="min-w-0">

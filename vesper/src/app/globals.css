@@ -118,6 +118,15 @@
   animation: nudge 320ms cubic-bezier(0.4, 0, 0.2, 1) 1;
 }
 
+/* Admin: a stock count or order that changed elsewhere glows bronze, then settles. */
+@keyframes flash {
+  from { background-color: rgba(201, 184, 166, 0.28); }
+  to { background-color: transparent; }
+}
+.anim-flash {
+  animation: flash 1400ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 /* Without JavaScript, scroll reveals must never hide content. */
 @media (scripting: none) {
   .anim-veil {

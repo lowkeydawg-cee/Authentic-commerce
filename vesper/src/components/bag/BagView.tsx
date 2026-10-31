@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { resolveLines, subtotal } from "@/lib/cart/resolve";
 import { useBag } from "@/lib/cart/store";
+import { RETURNS } from "@/lib/delivery";
 import { formatMoney } from "@/lib/format";
 import { BagLines } from "./BagLines";
+import { BagNotice } from "./BagNotice";
 
 export function BagView() {
   const lines = resolveLines(useBag());
@@ -12,6 +14,7 @@ export function BagView() {
   return (
     <div className="page-x mx-auto max-w-page pb-24 pt-[calc(var(--header-h)+56px)]">
       <h1 className="font-display text-[clamp(44px,6vw,88px)] leading-none">Your bag</h1>
+      <BagNotice className="mt-8 empty:hidden" />
       {lines.length === 0 ? (
         <div className="mt-12 flex flex-col items-start gap-5 border-t border-line pt-10">
           <p className="font-display text-3xl">Your bag is empty.</p>
@@ -46,7 +49,7 @@ export function BagView() {
             <Link href="/checkout" className="label mt-8 flex min-h-14 items-center justify-center bg-ivory font-semibold text-ink hover:bg-white">
               Checkout
             </Link>
-            <p className="mt-4 text-sm text-smoke">Free returns within 30 days. Taxes included.</p>
+            <p className="mt-4 text-sm text-smoke">Free returns within {RETURNS.days} days. Taxes included.</p>
           </aside>
         </div>
       )}

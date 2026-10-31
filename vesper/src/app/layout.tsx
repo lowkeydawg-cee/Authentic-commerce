@@ -3,6 +3,7 @@ import { Jost, Playfair_Display } from "next/font/google";
 import { BagDrawer } from "@/components/bag/BagDrawer";
 import { Footer } from "@/components/shell/Footer";
 import { Header } from "@/components/shell/Header";
+import { StoreChrome } from "@/components/shell/StoreChrome";
 import { SITE_URL } from "@/content/site";
 import "./globals.css";
 
@@ -40,12 +41,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Skip to content
         </a>
-        <Header />
+        <StoreChrome>
+          <Header />
+        </StoreChrome>
         <main id="main" tabIndex={-1} className="outline-none">
           {children}
         </main>
-        <Footer />
-        <BagDrawer />
+        <StoreChrome>
+          <Footer />
+          <BagDrawer />
+        </StoreChrome>
       </body>
     </html>
   );

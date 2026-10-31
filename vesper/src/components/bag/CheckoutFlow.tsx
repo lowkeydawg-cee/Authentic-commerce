@@ -3,7 +3,10 @@
 import Link from "next/link";
 import clsx from "clsx";
 import { useEffect, useId, useRef, useState } from "react";
-import { saveOrder, orderReference, type DemoOrder } from "@/lib/cart/orders";
+import { saveOrder, type DemoOrder } from "@/lib/cart/orders";
+import { getInventory, skuOf, type StockConflict } from "@/lib/inventory";
+import { refreshInventory } from "@/lib/inventory/live";
+import { BagNotice } from "./BagNotice";
 import { resolveLines, subtotal, type ResolvedLine } from "@/lib/cart/resolve";
 import { bag, useBag } from "@/lib/cart/store";
 import type { Money } from "@/lib/commerce/types";
@@ -88,31 +91,55 @@ export function CheckoutFlow() {
   const deliveryFee: Money = order?.delivery ?? { amount: deliveryOption.fee, currencyCode: sub.currencyCode };
   const total: Money = { amount: sub.amount + deliveryFee.amount, currencyCode: sub.currencyCode };
 
+  const [conflicts, setConflicts] = useState<StockConflict[] | null>(null);
+  const [placeError, setPlaceError] = useState<string | null>(null);
+
   const placeOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     setPlacing(true);
-    // Simulated authorisation latency for the demo payment.
-    await new Promise((r) => setTimeout(r, 900));
-    const record: DemoOrder = {
-      reference: orderReference(),
-      createdAt: new Date().toISOString(),
-      email: form.email,
-      name: form.name,
-      lines: lines.map((l) => l.line),
-      total,
-      delivery: deliveryOption.label,
-      payment: PAYMENT.find((p) => p.id === form.payment)!.label,
-    };
-    saveOrder(record);
-    setOrder({ record, lines, delivery: deliveryFee });
-    bag.clear();
-    setPlacing(false);
-    setStep(3);
+    setConflicts(null);
+    setPlaceError(null);
+    try {
+      // Stock is checked and reduced in one step by the inventory backend; prices come from it too.
+      const repo = await getInventory();
+      const res = await repo.placeOrder({
+        lines: lines.map((l) => ({ sku: skuOf(l.line.slug, l.line.colorwayId, l.line.size), quantity: l.line.quantity })),
+        customer: { name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim(), address: form.address.trim(), city: form.city.trim(), country: form.country },
+        delivery: form.delivery,
+        payment: form.payment,
+      });
+      if (!res.ok) {
+        setConflicts(res.conflicts);
+        // The bag corrects itself against the fresh numbers (see useBagStockGuard).
+        await refreshInventory();
+        return;
+      }
+      const currencyCode = res.order.currency;
+      const record: DemoOrder = {
+        reference: res.order.reference,
+        createdAt: res.order.createdAt,
+        email: res.order.customer.email,
+        name: res.order.customer.name,
+        lines: lines.map((l) => l.line),
+        total: { amount: res.order.total, currencyCode },
+        delivery: deliveryOption.label,
+        payment: PAYMENT.find((p) => p.id === form.payment)!.label,
+      };
+      saveOrder(record);
+      setOrder({ record, lines, delivery: { amount: res.order.deliveryFee, currencyCode } });
+      bag.clear();
+      setStep(3);
+    } catch {
+      setPlaceError("We couldn't place your order and nothing was charged. Please check your connection and try again.");
+    } finally {
+      setPlacing(false);
+    }
   };
 
   if (lines.length === 0 && !order) {
     return (
       <div className="page-x mx-auto flex min-h-[70svh] max-w-page flex-col items-start justify-center gap-5 pt-[var(--header-h)]">
+        <BagNotice className="w-full max-w-2xl empty:hidden" />
         <h1 className="font-display text-5xl">Your bag is empty.</h1>
         <Link href="/collections" className="label link-draw tap">
           Discover the collection
@@ -196,6 +223,7 @@ export function CheckoutFlow() {
         ))}
       </ol>
 
+      {step < 3 && <BagNotice className="mb-10 empty:hidden" />}
       <div className="grid gap-12 lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,1fr)] lg:items-start">
         <div key={step} className="anim-fade-quick min-w-0">
           {step === 0 && (
@@ -257,9 +285,25 @@ export function CheckoutFlow() {
                   ? "In the live store, card details are entered in the payment provider's secure form."
                   : `In the live store, a payment request is sent to ${form.phone.trim() || "your phone"} to approve.`}
               </p>
+              <div role="alert" className="empty:hidden">
+                {conflicts && (
+                  <div className="border border-[#E39A9D]/70 bg-night p-4 text-sm leading-relaxed">
+                    <p className="font-medium text-ivory">Some pieces sold out while you were checking out.</p>
+                    <ul className="mt-2 space-y-1 text-mist">
+                      {conflicts.map((c) => (
+                        <li key={c.sku}>
+                          {c.title}: {c.available === 0 ? "now sold out" : `only ${c.available} left (you asked for ${c.requested})`}
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-2 text-mist">Your bag has been updated. Review it, then place your order again.</p>
+                  </div>
+                )}
+                {placeError && <p className="border border-[#E39A9D]/70 bg-night p-4 text-sm">{placeError}</p>}
+              </div>
               <div className="flex items-center justify-between pt-4">
                 {backButton}
-                <button type="submit" disabled={placing} aria-busy={placing} className={primary}>
+                <button type="submit" disabled={placing || lines.length === 0} aria-busy={placing} className={primary}>
                   {placing ? "Placing order…" : `Place order · ${formatMoney(total)}`}
                 </button>
               </div>

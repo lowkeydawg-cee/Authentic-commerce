@@ -5,6 +5,8 @@ import { ProductCard } from "@/components/catalog/ProductCard";
 import { Reveal } from "@/components/home/Reveal";
 import { ProductExperience } from "@/components/product/ProductExperience";
 import { ViewIn3D } from "@/components/product/ViewIn3D";
+import { SEED_LEVELS } from "@/lib/inventory/seed";
+import { skuOf } from "@/lib/inventory/types";
 import { commerce } from "@/lib/commerce";
 
 type Params = Promise<{ slug: string }>;
@@ -42,7 +44,8 @@ export default async function ProductPage({ params, searchParams }: { params: Pa
     .sort((a, b) => Number(a.category === product.category) - Number(b.category === product.category) || a.rank - b.rank)
     .slice(0, 4);
 
-  const inStock = product.colorways.some((c) => product.sizes.some((s) => !c.soldOutSizes.includes(s)));
+  // Search engines get the opening stock; shoppers see live stock on the page.
+  const inStock = product.colorways.some((c) => product.sizes.some((s) => (SEED_LEVELS[skuOf(product.slug, c.id, s)] ?? 0) > 0));
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
